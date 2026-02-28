@@ -42,6 +42,7 @@ stop_gateway() {
 start_gateway() {
   export OPENCLAW_CONFIG_PATH="$CONFIG_FILE"
   export OPENCLAW_STATE_DIR="$STATE_DIR"
+  export OPENCLAW_GATEWAY_PORT="$PORT"
 
   echo "启动 Gateway 服务..."
   echo "配置文件: $OPENCLAW_CONFIG_PATH"
@@ -50,7 +51,7 @@ start_gateway() {
   echo "端口: $PORT"
   echo ""
 
-  nohup node "$SCRIPT_DIR/dist/index.mjs" gateway > /tmp/openclaw-gateway.log 2>&1 &
+  nohup node "$SCRIPT_DIR/dist/index.mjs" gateway --port "$PORT" > /tmp/openclaw-gateway.log 2>&1 &
   GATEWAY_PID=$!
   echo "$GATEWAY_PID" > "$PID_FILE"
 

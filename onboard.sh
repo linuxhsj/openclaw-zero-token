@@ -19,11 +19,11 @@ fi
 # 设置环境变量
 export OPENCLAW_CONFIG_PATH="$CONFIG_FILE"
 export OPENCLAW_STATE_DIR="$STATE_DIR"
-export OPENCLAW_PORT=3001
+export OPENCLAW_GATEWAY_PORT=3001
 
 echo "使用独立配置文件: $OPENCLAW_CONFIG_PATH"
 echo "使用独立状态目录: $OPENCLAW_STATE_DIR"
-echo "使用端口: $OPENCLAW_PORT"
+echo "使用端口: $OPENCLAW_GATEWAY_PORT"
 echo ""
 
 # 如果没有传递参数，默认运行 onboard 向导
