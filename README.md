@@ -31,7 +31,7 @@ OpenClaw Zero Token is a fork of [OpenClaw](https://github.com/openclaw/openclaw
 | Claude Web | ✅ **Tested** | claude-3-5-sonnet-20241022, claude-3-opus-20240229, claude-3-haiku-20240307 |
 | Doubao (豆包) | ✅ **Tested** | doubao-seed-2.0, doubao-pro |
 | ChatGPT Web | ✅ **Tested** | GPT-4, GPT-4 Turbo |
-| Gemini Web | ⏳ Untested | Gemini Pro, Gemini Ultra |
+| Gemini Web | ✅ **Tested** | Gemini Pro, Gemini Ultra |
 | Grok Web | ✅ **Tested** | Grok 1, Grok 2 |
 | Z Web | ⏳ Untested | GLM-4, GLM-3 Turbo |
 | Manus Web | ⏳ Untested | Manus 1 |

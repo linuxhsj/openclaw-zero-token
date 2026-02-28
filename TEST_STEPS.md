@@ -153,7 +153,7 @@ manus-web/manus-1
 - ⏳ chatgpt-web
 - ⏳ qwen-web
 - ⏳ kimi-web
-- ⏳ gemini-web
+- ✅ gemini-web
 - ✅ grok-web
 - ⏳ z-web
 - ⏳ manus-web

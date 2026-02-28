@@ -1,4 +1,8 @@
 import { chromium, type Browser, type BrowserContext, type Page } from "playwright-core";
+import { getHeadersWithAuth } from "../browser/cdp.helpers.js";
+import { getChromeWebSocketUrl, launchOpenClawChrome } from "../browser/chrome.js";
+import { resolveBrowserConfig, resolveProfile } from "../browser/config.js";
+import { loadConfig } from "../config/io.js";
 
 export interface ManusWebClientOptions {
   cookie: string;
@@ -17,33 +21,86 @@ export class ManusWebClientBrowser {
     this.options = options;
   }
 
+  private parseCookies(): Array<{ name: string; value: string; domain: string; path: string }> {
+    return this.options.cookie
+      .split(";")
+      .filter((c) => c.trim().includes("="))
+      .map((cookie) => {
+        const [name, ...valueParts] = cookie.trim().split("=");
+        return {
+          name: name?.trim() ?? "",
+          value: valueParts.join("=").trim(),
+          domain: ".manus.im",
+          path: "/",
+        };
+      })
+      .filter((c) => c.name.length > 0);
+  }
+
   async init(): Promise<void> {
     if (this.initialized) {
       return;
     }
 
-    this.browser = await chromium.launch({
-      headless: this.options.headless ?? true,
+    const rootConfig = loadConfig();
+    const browserConfig = resolveBrowserConfig(rootConfig.browser, rootConfig);
+    const profile = resolveProfile(browserConfig, browserConfig.defaultProfile);
+    if (!profile) {
+      throw new Error(`Could not resolve browser profile '${browserConfig.defaultProfile}'`);
+    }
+
+    let wsUrl: string | null = null;
+
+    if (browserConfig.attachOnly) {
+      console.log(`[Manus Web Browser] Connecting to existing Chrome at ${profile.cdpUrl}`);
+      for (let i = 0; i < 10; i++) {
+        wsUrl = await getChromeWebSocketUrl(profile.cdpUrl, 2000);
+        if (wsUrl) break;
+        await new Promise((r) => setTimeout(r, 500));
+      }
+      if (!wsUrl) {
+        throw new Error(
+          `Failed to connect to Chrome at ${profile.cdpUrl}. ` +
+            `Make sure Chrome is running in debug mode (./start-chrome-debug.sh)`,
+        );
+      }
+    } else {
+      const running = await launchOpenClawChrome(browserConfig, profile);
+      const cdpUrl = `http://127.0.0.1:${running.cdpPort}`;
+      for (let i = 0; i < 10; i++) {
+        wsUrl = await getChromeWebSocketUrl(cdpUrl, 2000);
+        if (wsUrl) break;
+        await new Promise((r) => setTimeout(r, 500));
+      }
+      if (!wsUrl) {
+        throw new Error(`Failed to resolve Chrome WebSocket URL from ${cdpUrl}`);
+      }
+    }
+
+    const connectedBrowser = await chromium.connectOverCDP(wsUrl, {
+      headers: getHeadersWithAuth(wsUrl),
     });
+    this.browser = connectedBrowser;
+    this.context = connectedBrowser.contexts()[0];
 
-    this.context = await this.browser.newContext({
-      userAgent: this.options.userAgent,
-    });
+    const pages = this.context.pages();
+    const manusPage = pages.find((p) => p.url().includes("manus.im"));
+    if (manusPage) {
+      console.log(`[Manus Web Browser] Found existing Manus page`);
+      this.page = manusPage;
+    } else {
+      this.page = await this.context.newPage();
+      await this.page.goto("https://manus.im/app", { waitUntil: "domcontentloaded" });
+    }
 
-    await this.context.addCookies(
-      this.options.cookie.split(";").map((cookie) => {
-        const [name, ...valueParts] = cookie.trim().split("=");
-        return {
-          name: name.trim(),
-          value: valueParts.join("=").trim(),
-          domain: ".manus.im",
-          path: "/",
-        };
-      }),
-    );
-
-    this.page = await this.context.newPage();
-    await this.page.goto("https://manus.im/app", { waitUntil: "domcontentloaded" });
+    const cookies = this.parseCookies();
+    if (cookies.length > 0) {
+      try {
+        await this.context.addCookies(cookies);
+      } catch (e) {
+        console.warn("[Manus Web Browser] Failed to add some cookies:", e);
+      }
+    }
 
     this.initialized = true;
   }
@@ -67,6 +124,7 @@ export class ManusWebClientBrowser {
           headers: {
             "Content-Type": "application/json",
           },
+          credentials: "include",
           body: JSON.stringify({
             conversation_id: conversationId || undefined,
             message,
