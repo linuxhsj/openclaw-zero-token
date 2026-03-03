@@ -254,10 +254,30 @@ ps aux | grep "chrome.*9222"
 ./server.sh restart
 
 # 检查配置文件
-cat .openclaw-state/openclaw.json | jq '.models.providers | keys'
+cat .openclaw-zero-state/openclaw.json | jq '.models.providers | keys'
 
 # 查看日志
-tail -f /tmp/openclaw-gateway.log
+tail -f /tmp/openclaw-zero-gateway.log
+```
+
+### 问题 5：glm-intl-web 认证或 API 错误
+
+**症状**：`glm-intl-web` 返回 `Authentication expired`、`API 500/401` 等错误。
+
+**说明**：
+- 国际版 `https://chat.z.ai/` 的请求链路与 `glm-web(chatglm.cn)` 不同，接口可能随前端版本变化。
+- 当前实现已切换为优先复用浏览器页面（UI 驱动）以提高稳定性。
+
+**排查建议**：
+```bash
+# 1) 确保调试浏览器与登录状态
+./start-chrome-debug.sh
+
+# 2) 重新授权 glm-intl-web
+./onboard.sh
+
+# 3) 使用抓包脚本分析真实请求（脚本已迁移到 test/）
+node test/fix-glm-intl-api.js
 ```
 
 ---
@@ -291,14 +311,27 @@ openclaw gateway stop
 ./server.sh stop
 
 # 查看日志
-tail -f /tmp/openclaw-gateway.log
+tail -f /tmp/openclaw-zero-gateway.log
 
 # 检查配置
-cat .openclaw-state/openclaw.json | jq '.models.providers | keys'
+cat .openclaw-zero-state/openclaw.json | jq '.models.providers | keys'
 
 # 检查认证
-cat .openclaw-state/agents/main/agent/auth-profiles.json | jq '.profiles | keys'
+cat .openclaw-zero-state/agents/main/agent/auth-profiles.json | jq '.profiles | keys'
 ```
+
+---
+
+## 🧪 调试脚本位置
+
+根目录下的 GLM 调试脚本已统一迁移到 `test/`：
+
+- `test/fix-glm-intl-api.js`：自动发送测试消息并抓取请求/响应
+- `test/debug-glm-intl-api.js`：持续监听 intl API 请求
+- `test/debug-glm-requests.js`：拦截并打印 POST 请求
+- `test/capture-glm-api.js`：CDP/Fetch 级抓包
+- `test/quick-debug-glm.js`：快速连通性调试
+- `test/direct-capture.js`：WebSocket 直连抓包
 
 ---
 

@@ -86,6 +86,7 @@ COMMIT_SUMMARY.md
 # Local untracked files
 .local/
 .openclaw-state/
+.openclaw-zero-state/
 .kiro/
 docs/.local/
 .tgz
