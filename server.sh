@@ -89,9 +89,15 @@ fi
 mkdir -p "$STATE_DIR"
 mkdir -p "$SCRIPT_DIR/logs"
 
+EXAMPLE_CONFIG="$SCRIPT_DIR/.openclaw-state.example/openclaw.json"
 if [ ! -f "$CONFIG_FILE" ]; then
-  echo '{}' > "$CONFIG_FILE"
-  echo "已创建空配置文件: $CONFIG_FILE"
+  if [ -f "$EXAMPLE_CONFIG" ]; then
+    cp "$EXAMPLE_CONFIG" "$CONFIG_FILE"
+    echo "已从示例复制配置文件: $EXAMPLE_CONFIG -> $CONFIG_FILE"
+  else
+    echo '{}' > "$CONFIG_FILE"
+    echo "已创建空配置文件: $CONFIG_FILE（建议从 .openclaw-state.example/openclaw.json 复制完整配置）"
+  fi
 fi
 
 # 从配置文件动态读取 token，回退到环境变量

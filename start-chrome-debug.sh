@@ -170,14 +170,15 @@ if curl -s http://127.0.0.1:9222/json/version > /dev/null 2>&1; then
   echo "正在打开各 Web 平台登录页（便于授权）..."
 
   WEB_URLS=(
-    # "https://claude.ai/new"
-    # "https://chatgpt.com"
-    # "https://www.doubao.com/chat/"
-    # "https://chat.qwen.ai"
-    # "https://www.kimi.com"
-    # "https://gemini.google.com/app"
-    # "https://grok.com"
-    # "https://chatglm.cn"
+    "https://claude.ai/new"
+    "https://chatgpt.com"
+    "https://www.doubao.com/chat/"
+    "https://chat.qwen.ai"
+    "https://www.kimi.com"
+    "https://gemini.google.com/app"
+    "https://grok.com"
+    "https://chat.deepseek.com/"
+    "https://chatglm.cn"
     "https://chat.z.ai/"
   )
   for url in "${WEB_URLS[@]}"; do

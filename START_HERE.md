@@ -9,9 +9,8 @@
 - **TEST_STEPS.md** - 完整测试步骤（推荐阅读）
 
 ### 📚 详细文档
-- **IMPLEMENTATION_COMPLETE.md** - 实现完成报告
-- **WEB_PLATFORMS_STATUS.md** - 当前状态
-- **FINAL_TEST_GUIDE.md** - 完整测试流程
+- **ARCHITECTURE.md** - 系统架构说明
+- **README.md** / **README_zh-CN.md** - 项目总览与支持平台
 
 ---
 

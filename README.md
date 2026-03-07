@@ -1,6 +1,6 @@
 # OpenClaw Zero Token
 
-**Zero API Token Cost** — Free access to AI models via browser-based authentication (ChatGPT, Claude, Gemini, DeepSeek, Qwen, Doubao, Kimi, GLM, Grok, Manus, and more).
+**Zero API Token Cost** — Free access to AI models via browser-based authentication (ChatGPT, Claude, Gemini, DeepSeek, Qwen International & China, Doubao, Kimi, GLM, Grok, Manus, and more).
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
@@ -28,7 +28,7 @@ OpenClaw Zero Token is a fork of [OpenClaw](https://github.com/openclaw/openclaw
 | Platform | Status | Domain | Models |
 |----------|--------|--------|--------|
 | Qwen (International) | ✅ **Tested** | chat.qwen.ai | Qwen 3.5 Plus, Qwen 3.5 Turbo |
-| Claude Web | ✅ **Tested** | claude.ai | claude-3-5-sonnet, claude-3-opus, claude-3-haiku |
+| Claude Web | ✅ **Tested** | claude.ai | claude-sonnet-4-6, claude-opus-4-6, claude-haiku-4-6 |
 | ChatGPT Web | ✅ **Tested** | chatgpt.com | GPT-4, GPT-4 Turbo |
 | Gemini Web | ✅ **Tested** | gemini.google.com | Gemini Pro, Gemini Ultra |
 | Grok Web | ✅ **Tested** | grok.com | Grok 1, Grok 2 |
@@ -89,7 +89,11 @@ npm install && npm run build && pnpm ui:build
 
 > **Important:** Only platforms completed in `./onboard.sh` are written into `openclaw.json` and shown in `/models`.
 
-See **START_HERE.md** and **TEST_STEPS.md** for details.
+> **Platform support:**
+> - **macOS / Linux:** Follow [START_HERE.md](START_HERE.md) for the step-by-step flow; see [INSTALLATION.md](INSTALLATION.md) for detailed setup. Run `./check-setup.sh` (on macOS you can also use `./check-mac-setup.sh`).
+> - **Windows:** Use WSL2, then follow the Linux flow ([START_HERE.md](START_HERE.md), [INSTALLATION.md](INSTALLATION.md)). Install WSL2: `wsl --install`; guide: https://docs.microsoft.com/en-us/windows/wsl/install.
+
+See **START_HERE.md**, **INSTALLATION.md**, and **TEST_STEPS.md** for details.
 
 ---
 
@@ -178,95 +182,14 @@ See **START_HERE.md** and **TEST_STEPS.md** for details.
 
 ---
 
-## Doubao Web Usage
-
-Doubao integration uses **browser automation** (Playwright) for authentication and API access, similar to Claude Web.
-
-### How It Works
-
-```
-Browser Login (Playwright)
-    ↓
-Capture sessionid & ttwid (Cookies)
-    ↓
-Keep Browser Connection Open
-    ↓
-Execute Requests in Browser Context (page.evaluate)
-    ↓
-Doubao API Response (SSE Stream)
-```
-
-**Key Features:**
-- ✅ **No Proxy Required**: Direct browser-based access
-- ✅ **Automatic Parameter Handling**: Browser generates dynamic parameters (msToken, a_bogus, fp, etc.)
-- ✅ **Cloudflare Bypass**: Requests sent in real browser context
-- ✅ **Simple Authentication**: Only needs sessionid and ttwid
-- ✅ **Streaming Support**: Real-time response streaming
-
-### Quick Start (Doubao)
-
-Same 6-step flow: build → Chrome debug → login platforms → onboard → DeepSeek auth → server. For Doubao, select **doubao-web** in `./onboard.sh`.
-
-### Available Models
-
-| Model ID | Name | Features |
-|----------|------|----------|
-| `doubao-seed-2.0` | Doubao-Seed 2.0 | Supports reasoning |
-| `doubao-pro` | Doubao Pro | Standard model |
-
-### Configuration
-
-The configuration is stored in `.openclaw-zero-state/openclaw.json`:
-
-```json
-{
-  "browser": {
-    "attachOnly": true,
-    "defaultProfile": "my-chrome",
-    "profiles": {
-      "my-chrome": {
-        "cdpUrl": "http://127.0.0.1:9222"
-      }
-    }
-  },
-  "models": {
-    "providers": {
-      "doubao-web": {
-        "baseUrl": "https://www.doubao.com",
-        "api": "doubao-web",
-        "models": [
-          {
-            "id": "doubao-seed-2.0",
-            "name": "Doubao-Seed 2.0 (Web)"
-          }
-        ]
-      }
-    }
-  }
-}
-```
-
-### Troubleshooting
-
-**Chrome connection failed:**
-```bash
-# Check if Chrome is running
-ps aux | grep "chrome.*9222"
-```
-
-See **INSTALLATION.md** and **START_HERE.md** for full setup and troubleshooting.
-
----
-
 ## Roadmap
 
 ### Current Focus
-- ✅ DeepSeek Web, Qwen International, Kimi, Claude Web, Doubao, Manus API — all **tested and working**
+- ✅ DeepSeek Web, Qwen International, Qwen CN, Kimi, Claude Web, Doubao, ChatGPT Web, Gemini Web, Grok Web, GLM Web, GLM International, Manus API — all **tested and working**
 - 🔧 Improving credential capture reliability
 - 📝 Documentation improvements
 
 ### Planned Features
-- 🔜 ChatGPT Web authentication support
 - 🔜 Auto-refresh for expired sessions
 
 ---
@@ -304,6 +227,25 @@ export class PlatformWebClient {
 export function createPlatformWebStreamFn(credentials: string): StreamFn {
   // Handle platform-specific response format
 }
+```
+
+---
+
+## File Structure
+
+```
+openclaw-zero-token/
+├── src/
+│   ├── providers/           # Web auth & API clients
+│   ├── agents/              # Stream handlers
+│   ├── commands/            # Auth flows
+│   └── browser/             # Chrome automation
+├── ui/                      # Web UI (Lit 3.x)
+├── .openclaw-zero-state/    # Local state (not committed)
+│   ├── openclaw.json        # Config
+│   └── agents/main/agent/
+│       └── auth.json        # Credentials (sensitive)
+└── .gitignore               # Includes .openclaw-zero-state/
 ```
 
 ---

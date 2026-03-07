@@ -1,10 +1,10 @@
 {
   "meta": {
     "lastTouchedVersion": "2026.2.19",
-    "lastTouchedAt": "2026-03-03T00:00:00.000Z"
+    "lastTouchedAt": "2026-03-06T23:04:03.000Z"
   },
   "wizard": {
-    "lastRunAt": "2026-03-03T00:00:00.000Z",
+    "lastRunAt": "2026-03-06T23:04:03.000Z",
     "lastRunVersion": "2026.2.19",
     "lastRunCommand": "onboard",
     "lastRunMode": "local"
@@ -46,8 +46,8 @@
     "bind": "loopback",
     "auth": {
       "mode": "token",
-      "token": "YOUR_GATEWAY_TOKEN_HERE"
-    },
+      "token": "62b791625fa441be036acd3c206b7e14e2bb13c803355823"
+  },
     "tailscale": {
       "mode": "off",
       "resetOnExit": false

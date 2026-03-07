@@ -48,9 +48,15 @@ echo "系统: $OS  |  Node: $($NODE --version 2>/dev/null)"
 # ─── 初始化目录与配置 ─────────────────────────────────────────
 mkdir -p "$STATE_DIR"
 
+EXAMPLE_CONFIG="$SCRIPT_DIR/.openclaw-state.example/openclaw.json"
 if [ ! -f "$CONFIG_FILE" ]; then
-  echo '{}' > "$CONFIG_FILE"
-  echo "已创建空配置文件: $CONFIG_FILE"
+  if [ -f "$EXAMPLE_CONFIG" ]; then
+    cp "$EXAMPLE_CONFIG" "$CONFIG_FILE"
+    echo "已从示例复制配置文件: $EXAMPLE_CONFIG -> $CONFIG_FILE"
+  else
+    echo '{}' > "$CONFIG_FILE"
+    echo "已创建空配置文件: $CONFIG_FILE（建议从 .openclaw-state.example/openclaw.json 复制完整配置）"
+  fi
 fi
 
 export OPENCLAW_CONFIG_PATH="$CONFIG_FILE"

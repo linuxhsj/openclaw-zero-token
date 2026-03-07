@@ -1,5 +1,7 @@
 # OpenClaw State Directory Example
 
+[English](README.en.md) | 简体中文
+
 这是 `.openclaw-zero-state/` 目录的示例配置文件。
 
 ## 目录结构
@@ -25,24 +27,28 @@
 
 首次运行时，`.openclaw-zero-state/` 目录会自动创建。
 
+⚠️ **重要**：`openclaw.json` 不能为空，否则 Gateway 无法正常启动。首次运行时会自动从 `.openclaw-state.example/openclaw.json` 复制完整配置模板。
+
 ### 自动创建（推荐）
 
-运行配置向导时会自动创建：
+运行配置向导或 `server.sh` 时，若 `.openclaw-zero-state/openclaw.json` 不存在，会自动从示例复制：
 
 ```bash
 ./onboard.sh
+# 或
+./server.sh start
 ```
 
 **自动创建的内容：**
 1. ✅ `.openclaw-zero-state/` 目录
-2. ✅ `openclaw.json` 配置文件（空配置）
+2. ✅ `openclaw.json` 配置文件（从 `.openclaw-state.example/openclaw.json` 复制，非空）
 3. ✅ `agents/main/agent/` 子目录
 4. ✅ `agents/main/sessions/` 会话目录
 5. ✅ `credentials/` 认证目录
 6. ✅ `auth-profiles.json` 认证凭证文件（配置完成后）
 
 **你需要做的：**
-1. 运行 `./onboard.sh`
+1. 运行 `./onboard.sh` 或 `./server.sh start`
 2. 选择 AI 提供商（如 Claude Web）
 3. 在浏览器中登录账号
 4. 等待系统自动保存凭证
@@ -51,7 +57,7 @@
 
 ### 手动创建（可选）
 
-如果需要手动创建：
+若自动复制未生效（例如示例文件不存在），可手动复制：
 
 ```bash
 mkdir -p .openclaw-zero-state
@@ -161,7 +167,7 @@ cp .openclaw-state.example/openclaw.json .openclaw-zero-state/openclaw.json
 
 **配置向导会自动创建：**
 - ✅ `.openclaw-zero-state/` 目录
-- ✅ `openclaw.json` 配置文件
+- ✅ `openclaw.json` 配置文件（从示例复制，若不存在）
 - ✅ `agents/main/agent/` 目录
 - ✅ `agents/main/sessions/` 目录
 - ✅ `credentials/` 目录
@@ -203,8 +209,10 @@ Doctor changes
 ### 配置文件不存在或损坏
 
 ```bash
-# 重新运行配置向导（会重新创建所有配置）
+# 运行 onboard 或 server 会自动从 .openclaw-state.example/openclaw.json 复制配置
 ./onboard.sh
+# 或
+./server.sh start
 ```
 
 ### 路径错误
