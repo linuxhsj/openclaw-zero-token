@@ -5,6 +5,39 @@ import type { AuthChoice } from "./onboard-types.js";
 
 const BACK_VALUE = "__back";
 
+/**
+ * Prompt for multiple auth choices (multi-select)
+ */
+export async function promptAuthChoicesMulti(params: {
+  prompter: WizardPrompter;
+  store: AuthProfileStore;
+  includeSkip: boolean;
+}): Promise<AuthChoice[]> {
+  const { groups, skipOption } = buildAuthChoiceGroups(params);
+  const availableGroups = groups.filter((group) => group.options.length > 0);
+
+  if (availableGroups.length === 0) {
+    return [];
+  }
+
+  // Flatten all options for multi-select
+  const allOptions = availableGroups.flatMap((group) =>
+    group.options.map((opt) => ({
+      value: opt.value,
+      label: `${group.label}: ${opt.label}`,
+      hint: opt.hint,
+    }))
+  );
+
+  const selection = await params.prompter.multiselect({
+    message: "Select models/providers to authorize (multi-select)",
+    options: allOptions,
+    required: false,
+  });
+
+  return selection as AuthChoice[];
+}
+
 export async function promptAuthChoiceGrouped(params: {
   prompter: WizardPrompter;
   store: AuthProfileStore;

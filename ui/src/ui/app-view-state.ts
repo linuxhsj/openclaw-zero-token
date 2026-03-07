@@ -34,6 +34,7 @@ import type {
 import type { ChatAttachment, ChatQueueItem, CronFormState } from "./ui-types.ts";
 import type { NostrProfileFormState } from "./views/channels.nostr-profile-form.ts";
 import type { SessionLogEntry } from "./views/usage.ts";
+import type { AskOnceModelInfo, AskOnceQueryResult } from "./controllers/askonce.ts";
 
 export type AppViewState = {
   settings: UiSettings;
@@ -222,6 +223,15 @@ export type AppViewState = {
   logsMaxBytes: number;
   logsAtBottom: boolean;
   updateAvailable: import("./types.js").UpdateAvailable | null;
+  // AskOnce state
+  askonceModelsLoading: boolean;
+  askonceModels: AskOnceModelInfo[];
+  askonceModelsError: string | null;
+  askonceQueryLoading: boolean;
+  askonceQueryQuestion: string;
+  askonceQueryResult: AskOnceQueryResult | null;
+  askonceQueryError: string | null;
+  askonceSelectedModels: string[];
   client: GatewayBrowserClient | null;
   refreshSessionsAfterChat: Set<string>;
   connect: () => void;

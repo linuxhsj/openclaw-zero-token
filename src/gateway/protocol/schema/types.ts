@@ -44,6 +44,12 @@ import type {
   WebLoginWaitParamsSchema,
 } from "./channels.js";
 import type {
+  AskOnceQueryParamsSchema,
+  AskOnceQueryResultSchema,
+  AskOnceListResultSchema,
+  AskOnceModelInfoSchema,
+} from "./askonce.js";
+import type {
   ConfigApplyParamsSchema,
   ConfigGetParamsSchema,
   ConfigPatchParamsSchema,
@@ -247,3 +253,7 @@ export type ChatEvent = Static<typeof ChatEventSchema>;
 export type UpdateRunParams = Static<typeof UpdateRunParamsSchema>;
 export type TickEvent = Static<typeof TickEventSchema>;
 export type ShutdownEvent = Static<typeof ShutdownEventSchema>;
+export type AskOnceQueryParams = Static<typeof AskOnceQueryParamsSchema>;
+export type AskOnceQueryResult = Static<typeof AskOnceQueryResultSchema>;
+export type AskOnceListResult = Static<typeof AskOnceListResultSchema>;
+export type AskOnceModelInfo = Static<typeof AskOnceModelInfoSchema>;

@@ -68,6 +68,8 @@ import { renderNodes } from "./views/nodes.ts";
 import { renderOverview } from "./views/overview.ts";
 import { renderSessions } from "./views/sessions.ts";
 import { renderSkills } from "./views/skills.ts";
+import { renderAskOnceView } from "./views/askonce.ts";
+import { loadAskOnceModels, executeAskOnceQuery } from "./controllers/askonce.ts";
 
 const AVATAR_DATA_RE = /^data:/i;
 const AVATAR_HTTP_RE = /^https?:\/\//i;
@@ -872,6 +874,108 @@ export function renderApp(state: AppViewState) {
                 assistantName: state.assistantName,
                 assistantAvatar: state.assistantAvatar,
               })
+            : nothing
+        }
+
+        ${
+          state.tab === "askonce"
+            ? (() => {
+                // Create an adapter object that matches AskOnceState interface
+                const askonceState = {
+                  get client() {
+                    return state.client;
+                  },
+                  get connected() {
+                    return state.connected;
+                  },
+                  get modelsLoading() {
+                    return state.askonceModelsLoading;
+                  },
+                  set modelsLoading(v: boolean) {
+                    state.askonceModelsLoading = v;
+                  },
+                  get models() {
+                    return state.askonceModels;
+                  },
+                  set models(v: import("./controllers/askonce.js").AskOnceModelInfo[]) {
+                    state.askonceModels = v;
+                  },
+                  get modelsError() {
+                    return state.askonceModelsError;
+                  },
+                  set modelsError(v: string | null) {
+                    state.askonceModelsError = v;
+                  },
+                  get queryLoading() {
+                    return state.askonceQueryLoading;
+                  },
+                  set queryLoading(v: boolean) {
+                    state.askonceQueryLoading = v;
+                  },
+                  get queryQuestion() {
+                    return state.askonceQueryQuestion;
+                  },
+                  set queryQuestion(v: string) {
+                    state.askonceQueryQuestion = v;
+                  },
+                  get queryResult() {
+                    return state.askonceQueryResult;
+                  },
+                  set queryResult(v: import("./controllers/askonce.js").AskOnceQueryResult | null) {
+                    state.askonceQueryResult = v;
+                  },
+                  get queryError() {
+                    return state.askonceQueryError;
+                  },
+                  set queryError(v: string | null) {
+                    state.askonceQueryError = v;
+                  },
+                  get selectedModels() {
+                    return state.askonceSelectedModels;
+                  },
+                  set selectedModels(v: string[]) {
+                    state.askonceSelectedModels = v;
+                  },
+                };
+
+                return renderAskOnceView({
+                  connected: state.connected,
+                  client: state.client,
+                  modelsLoading: state.askonceModelsLoading,
+                  models: state.askonceModels,
+                  modelsError: state.askonceModelsError,
+                  queryLoading: state.askonceQueryLoading,
+                  queryQuestion: state.askonceQueryQuestion,
+                  queryResult: state.askonceQueryResult,
+                  queryError: state.askonceQueryError,
+                  selectedModels: state.askonceSelectedModels,
+                  onLoadModels: () => {
+                    loadAskOnceModels(askonceState as any);
+                  },
+                  onExecuteQuery: (question, selectedModels) => {
+                    state.askonceQueryQuestion = question;
+                    executeAskOnceQuery(askonceState as any, question, selectedModels);
+                  },
+                  onToggleModel: (modelId) => {
+                    const idx = state.askonceSelectedModels.indexOf(modelId);
+                    if (idx >= 0) {
+                      state.askonceSelectedModels = state.askonceSelectedModels.filter((m) => m !== modelId);
+                    } else {
+                      state.askonceSelectedModels = [...state.askonceSelectedModels, modelId];
+                    }
+                  },
+                  onSelectAllModels: () => {
+                    const availableModels = state.askonceModels.filter((m) => m.available);
+                    state.askonceSelectedModels = availableModels.map((m) => m.id);
+                  },
+                  onClearAllModels: () => {
+                    state.askonceSelectedModels = [];
+                  },
+                  onQuestionChange: (question) => {
+                    state.askonceQueryQuestion = question;
+                  },
+                });
+              })()
             : nothing
         }
 

@@ -46,6 +46,12 @@ import {
   WebLoginWaitParamsSchema,
 } from "./channels.js";
 import {
+  AskOnceQueryParamsSchema,
+  AskOnceQueryResultSchema,
+  AskOnceListResultSchema,
+  AskOnceModelInfoSchema,
+} from "./askonce.js";
+import {
   ConfigApplyParamsSchema,
   ConfigGetParamsSchema,
   ConfigPatchParamsSchema,
@@ -262,6 +268,10 @@ export const ProtocolSchemas: Record<string, TSchema> = {
   UpdateRunParams: UpdateRunParamsSchema,
   TickEvent: TickEventSchema,
   ShutdownEvent: ShutdownEventSchema,
+  AskOnceQueryParams: AskOnceQueryParamsSchema,
+  AskOnceQueryResult: AskOnceQueryResultSchema,
+  AskOnceListResult: AskOnceListResultSchema,
+  AskOnceModelInfo: AskOnceModelInfoSchema,
 };
 
 export const PROTOCOL_VERSION = 3 as const;

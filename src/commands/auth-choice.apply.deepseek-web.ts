@@ -1,4 +1,4 @@
-import { loginDeepseekWeb } from "../providers/deepseek-web-auth.js";
+import { loginDeepseekWeb, loginDeepseekWebAttachOnly } from "../providers/deepseek-web-auth.js";
 import type { ApplyAuthChoiceParams, ApplyAuthChoiceResult } from "./auth-choice.apply.js";
 import { applyDeepseekWebConfig } from "./onboard-auth.config-core.js";
 import { setDeepseekWebCookie } from "./onboard-auth.credentials.js";
@@ -21,9 +21,14 @@ export async function applyAuthChoiceDeepseekWeb(
       message: "DeepSeek Auth Mode",
       options: [
         {
+          value: "attach",
+          label: "Attach to Existing Browser (Recommended)",
+          hint: "Use already-debugged Chrome, opens DeepSeek if needed",
+        },
+        {
           value: "auto",
-          label: "Automated Login (Recommended)",
-          hint: "Opens browser to capture login automatically",
+          label: "Automated Login",
+          hint: "Launch new browser to capture login",
         },
         {
           value: "manual",
@@ -33,7 +38,32 @@ export async function applyAuthChoiceDeepseekWeb(
       ],
     });
 
-    if (mode === "auto") {
+    if (mode === "attach") {
+      const spin = prompter.progress("Connecting to existing Chrome...");
+      try {
+        const result = await loginDeepseekWebAttachOnly({
+          onProgress: (msg) => spin.update(msg),
+        });
+        spin.stop("Login captured successfully!");
+        cookie = result.cookie;
+        bearer = result.bearer;
+        await setDeepseekWebCookie(
+          { cookie, bearer: bearer.trim() || undefined, userAgent: result.userAgent },
+          agentDir,
+        );
+      } catch (err) {
+        spin.stop("Attach login failed.");
+        runtime.error(String(err));
+        const retryManual = await prompter.confirm({
+          message: "Would you like to try manual paste instead?",
+          initialValue: true,
+        });
+        if (!retryManual) {
+          throw err;
+        }
+        // Fall through to manual
+      }
+    } else if (mode === "auto") {
       const spin = prompter.progress("Preparing automated login...");
       try {
         const result = await loginDeepseekWeb({

@@ -211,6 +211,14 @@ import {
   WebLoginStartParamsSchema,
   type WebLoginWaitParams,
   WebLoginWaitParamsSchema,
+  type AskOnceQueryParams,
+  AskOnceQueryParamsSchema,
+  type AskOnceQueryResult,
+  AskOnceQueryResultSchema,
+  type AskOnceListResult,
+  AskOnceListResultSchema,
+  type AskOnceModelInfo,
+  AskOnceModelInfoSchema,
   type WizardCancelParams,
   WizardCancelParamsSchema,
   type WizardNextParams,
@@ -376,6 +384,7 @@ export const validateUpdateRunParams = ajv.compile<UpdateRunParams>(UpdateRunPar
 export const validateWebLoginStartParams =
   ajv.compile<WebLoginStartParams>(WebLoginStartParamsSchema);
 export const validateWebLoginWaitParams = ajv.compile<WebLoginWaitParams>(WebLoginWaitParamsSchema);
+export const validateAskOnceQueryParams = ajv.compile<AskOnceQueryParams>(AskOnceQueryParamsSchema);
 
 export function formatValidationErrors(errors: ErrorObject[] | null | undefined) {
   if (!errors?.length) {

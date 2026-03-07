@@ -336,6 +336,16 @@ export class OpenClawApp extends LitElement {
   @state() accessor logsMaxBytes = 250_000;
   @state() accessor logsAtBottom = true;
 
+  // AskOnce state
+  @state() accessor askonceModelsLoading = false;
+  @state() accessor askonceModels: import("./controllers/askonce.js").AskOnceModelInfo[] = [];
+  @state() accessor askonceModelsError: string | null = null;
+  @state() accessor askonceQueryLoading = false;
+  @state() accessor askonceQueryQuestion = "";
+  @state() accessor askonceQueryResult: import("./controllers/askonce.js").AskOnceQueryResult | null = null;
+  @state() accessor askonceQueryError: string | null = null;
+  @state() accessor askonceSelectedModels: string[] = [];
+
   client: GatewayBrowserClient | null = null;
   private chatScrollFrame: number | null = null;
   private chatScrollTimeout: number | null = null;

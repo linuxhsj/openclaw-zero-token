@@ -337,7 +337,7 @@ export async function runOnboardingWizard(
   let nextConfig: OpenClawConfig = applyOnboardingLocalWorkspaceConfig(baseConfig, workspaceDir);
 
   const { ensureAuthProfileStore } = await import("../agents/auth-profiles.js");
-  const { promptAuthChoiceGrouped } = await import("../commands/auth-choice-prompt.js");
+  const { promptAuthChoiceGrouped, promptAuthChoicesMulti } = await import("../commands/auth-choice-prompt.js");
   const { promptCustomApiConfig } = await import("../commands/onboard-custom.js");
   const { applyAuthChoice, resolvePreferredProviderForAuthChoice, warnIfModelConfigLooksOff } =
     await import("../commands/auth-choice.js");
@@ -347,51 +347,85 @@ export async function runOnboardingWizard(
     allowKeychainPrompt: false,
   });
   const authChoiceFromPrompt = opts.authChoice === undefined;
-  const authChoice =
-    opts.authChoice ??
-    (await promptAuthChoiceGrouped({
-      prompter,
-      store: authStore,
-      includeSkip: true,
-    }));
 
-  if (authChoice === "custom-api-key") {
-    const customResult = await promptCustomApiConfig({
-      prompter,
-      runtime,
-      config: nextConfig,
-    });
-    nextConfig = customResult.config;
+  // If user passed authChoice via CLI, use single mode
+  // Otherwise, ask if they want single or multi-select mode
+  let authChoices: AuthChoice[] = [];
+  if (opts.authChoice) {
+    authChoices = [opts.authChoice];
   } else {
-    const authResult = await applyAuthChoice({
-      authChoice,
-      config: nextConfig,
-      prompter,
-      runtime,
-      setDefaultModel: true,
-      opts: {
-        token: opts.authChoice === "apiKey" && opts.token ? opts.token : undefined,
-        siliconflowGlobalApiKey: opts.siliconflowGlobalApiKey,
-        siliconflowCnApiKey: opts.siliconflowCnApiKey,
-      },
+    // Ask user to choose between single or multi-select
+    const selectMode = await prompter.select({
+      message: "Authorize models",
+      options: [
+        { value: "single", label: "One model at a time" },
+        { value: "multi", label: "Multiple models at once (Recommended)" },
+      ],
     });
-    nextConfig = authResult.config;
+
+    if (selectMode === "single") {
+      const singleChoice = await promptAuthChoiceGrouped({
+        prompter,
+        store: authStore,
+        includeSkip: true,
+      });
+      if (singleChoice !== "skip") {
+        authChoices = [singleChoice];
+      }
+    } else {
+      const multiChoices = await promptAuthChoicesMulti({
+        prompter,
+        store: authStore,
+        includeSkip: false,
+      });
+      authChoices = multiChoices;
+    }
   }
 
-  if (authChoiceFromPrompt && authChoice !== "custom-api-key") {
-    const modelSelection = await promptDefaultModel({
-      config: nextConfig,
-      prompter,
-      allowKeep: true,
-      ignoreAllowlist: true,
-      includeVllm: true,
-      preferredProvider: resolvePreferredProviderForAuthChoice(authChoice),
-    });
-    if (modelSelection.config) {
-      nextConfig = modelSelection.config;
+  // Apply auth for each selected provider
+  for (const authChoice of authChoices) {
+    if (authChoice === "custom-api-key") {
+      const customResult = await promptCustomApiConfig({
+        prompter,
+        runtime,
+        config: nextConfig,
+      });
+      nextConfig = customResult.config;
+    } else {
+      const authResult = await applyAuthChoice({
+        authChoice,
+        config: nextConfig,
+        prompter,
+        runtime,
+        setDefaultModel: true,
+        opts: {
+          token: opts.authChoice === "apiKey" && opts.token ? opts.token : undefined,
+          siliconflowGlobalApiKey: opts.siliconflowGlobalApiKey,
+          siliconflowCnApiKey: opts.siliconflowCnApiKey,
+        },
+      });
+      nextConfig = authResult.config;
     }
-    if (modelSelection.model) {
-      nextConfig = applyPrimaryModel(nextConfig, modelSelection.model);
+  }
+
+  // For single selection, also prompt for default model
+  if (authChoiceFromPrompt && authChoices.length === 1) {
+    const authChoice = authChoices[0];
+    if (authChoice !== "custom-api-key") {
+      const modelSelection = await promptDefaultModel({
+        config: nextConfig,
+        prompter,
+        allowKeep: true,
+        ignoreAllowlist: true,
+        includeVllm: true,
+        preferredProvider: resolvePreferredProviderForAuthChoice(authChoice),
+      });
+      if (modelSelection.config) {
+        nextConfig = modelSelection.config;
+      }
+      if (modelSelection.model) {
+        nextConfig = applyPrimaryModel(nextConfig, modelSelection.model);
+      }
     }
   }
 

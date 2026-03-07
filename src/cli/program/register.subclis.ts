@@ -286,6 +286,15 @@ const entries: SubCliEntry[] = [
       mod.registerCompletionCli(program);
     },
   },
+  {
+    name: "askonce",
+    description: "一次提问，获取所有大模型答案",
+    hasSubcommands: false,
+    register: async (program) => {
+      const mod = await import("../askonce-cli.js");
+      mod.registerAskOnceCli(program);
+    },
+  },
 ];
 
 export function getSubCliEntries(): SubCliEntry[] {
