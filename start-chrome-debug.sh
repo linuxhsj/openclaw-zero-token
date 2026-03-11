@@ -47,19 +47,19 @@ detect_chrome() {
 
   case "$OS" in
     mac)
-      for p in "${mac_paths[@]}"; do
+       for p in "${mac_paths[@]}"; do
         [ -f "$p" ] && echo "$p" && return
       done
       # 也尝试命令方式
       command -v google-chrome >/dev/null 2>&1 && echo "google-chrome" && return
       ;;
-    win|wsl)
+    win)  #  纯 Windows (Git Bash) 单独走 Windows 路径
       for p in "${win_paths[@]}"; do
         [ -f "$p" ] && echo "$p" && return
       done
       ;;
-    linux)
-      for p in "${linux_paths[@]}"; do
+    wsl|linux)  #  核心修复：WSL 和 Linux 归为一类
+      for p in "${linux_paths[@]}"; do  # 去查 WSL 内的 Linux 路径（/usr/bin/...）
         [ -f "$p" ] && echo "$p" && return
       done
       # 命令回退
