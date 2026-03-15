@@ -116,11 +116,12 @@ export const zh_TW: TranslationMap = {
     onboardingDisabled: "引導期間禁用",
   },
   languages: {
-    en: "English",
-    zhCN: "简体中文 (簡體中文)",
-    zhTW: "繁體中文 (繁體中文)",
-    ptBR: "Português (巴西葡萄牙語)",
-    de: "Deutsch (德語)",
-    es: "Español (西班牙語)",
+    en: "英語 (English)",
+    zhCN: "簡體中文 (Simplified Chinese)",
+    zhTW: "繁體中文 (Traditional Chinese)",
+    ptBR: "葡萄牙語 (Brazilian Portuguese)",
+    de: "德語 (Deutsch)",
+    es: "西班牙語 (Español)",
+    vi: "越南語 (Tiếng Việt)",
   },
 };

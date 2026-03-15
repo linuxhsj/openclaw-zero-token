@@ -125,6 +125,7 @@ export const es: TranslationMap = {
     ptBR: "Portugués brasileño (Português)",
     de: "Deutsch (Alemán)",
     es: "Español",
+    vi: "Vietnamita (Tiếng Việt)",
   },
   cron: {
     summary: {
