@@ -25,6 +25,12 @@ const MODEL_MAP: Record<string, string> = {
   "mimo-v2-pro": "mimo-v2-flash-studio",
 };
 
+/** 允许的工具列表(核心工具) */
+const ALLOWED_TOOLS = [
+  "read", "write", "edit", "exec", "process", "browser", "web_search", "web_fetch",
+  "glob", "grep", "todowrite", "question",
+];
+
 export class XiaomiMimoWebClientBrowser {
   private cookie: string;
   private browser: BrowserContext | null = null;
