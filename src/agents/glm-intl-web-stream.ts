@@ -504,7 +504,9 @@ export function createGlmIntlWebStreamFn(cookieOrJson: string): StreamFn {
           emitDelta(mode, tagBuffer);
         }
 
-        console.log(`[GlmIntlWebStream] Stream completed. Parts: ${contentParts.length}, Tools: ${accumulatedToolCalls.length}`);
+        console.log(
+          `[GlmIntlWebStream] Stream completed. Parts: ${contentParts.length}, Tools: ${accumulatedToolCalls.length}`,
+        );
 
         stream.push({
           type: "done",

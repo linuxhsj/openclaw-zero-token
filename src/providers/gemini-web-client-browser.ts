@@ -114,73 +114,76 @@ export class GeminiWebClientBrowser {
   }): Promise<ReadableStream<Uint8Array>> {
     if (!this.page) throw new Error("GeminiWebClientBrowser not initialized");
 
-    const sent = await this.page.evaluate(
-      (msg: string) => {
-        // 输入框：优先匹配 Gemini 占位符，再通用选择器（参考 Scrapling 多策略）
-        const inputSelectors = [
-          '[placeholder*="Gemini"]',
-          '[placeholder*="问问"]',
-          '[data-placeholder*="Gemini"]',
-          '[contenteditable="true"]',
-          'div[role="textbox"]',
-          "textarea",
-          '[aria-label*="message"]',
-          '[aria-label*="prompt"]',
-        ];
-        let inputEl: HTMLElement | null = null;
-        for (const sel of inputSelectors) {
-          const el = document.querySelector(sel);
-          if (el && (el as HTMLElement).offsetParent !== null) {
-            inputEl = el as HTMLElement;
-            break;
-          }
+    const sent = await this.page.evaluate((msg: string) => {
+      // 输入框：优先匹配 Gemini 占位符，再通用选择器（参考 Scrapling 多策略）
+      const inputSelectors = [
+        '[placeholder*="Gemini"]',
+        '[placeholder*="问问"]',
+        '[data-placeholder*="Gemini"]',
+        '[contenteditable="true"]',
+        'div[role="textbox"]',
+        "textarea",
+        '[aria-label*="message"]',
+        '[aria-label*="prompt"]',
+      ];
+      let inputEl: HTMLElement | null = null;
+      for (const sel of inputSelectors) {
+        const el = document.querySelector(sel);
+        if (el && (el as HTMLElement).offsetParent !== null) {
+          inputEl = el as HTMLElement;
+          break;
         }
-        if (!inputEl) return { ok: false, error: "找不到输入框" };
+      }
+      if (!inputEl) return { ok: false, error: "找不到输入框" };
 
-        inputEl.focus();
-        if (inputEl.tagName === "TEXTAREA" || (inputEl as HTMLInputElement).tagName === "INPUT") {
-          (inputEl as HTMLTextAreaElement).value = msg;
-          (inputEl as HTMLTextAreaElement).dispatchEvent(new Event("input", { bubbles: true }));
-        } else {
-          (inputEl as HTMLElement).innerText = msg;
-          (inputEl as HTMLElement).dispatchEvent(new Event("input", { bubbles: true }));
-          (inputEl as HTMLElement).dispatchEvent(new Event("change", { bubbles: true }));
-        }
+      inputEl.focus();
+      if (inputEl.tagName === "TEXTAREA" || (inputEl as HTMLInputElement).tagName === "INPUT") {
+        (inputEl as HTMLTextAreaElement).value = msg;
+        (inputEl as HTMLTextAreaElement).dispatchEvent(new Event("input", { bubbles: true }));
+      } else {
+        (inputEl as HTMLElement).innerText = msg;
+        (inputEl as HTMLElement).dispatchEvent(new Event("input", { bubbles: true }));
+        (inputEl as HTMLElement).dispatchEvent(new Event("change", { bubbles: true }));
+      }
 
-        const sendSelectors = [
-          'button[aria-label*="Send"]',
-          'button[aria-label*="send"]',
-          'button[aria-label*="提交"]',
-          'button[aria-label*="发送"]',
-          'button[type="submit"]',
-          'button[data-icon="send"]',
-          'button[data-testid*="send"]',
-          "form button[type=submit]",
-          'button[class*="send"]',
-          '[aria-label*="Send message"]',
-          '.send-button',
-        ];
-        let sendBtn: HTMLElement | null = null;
-        for (const sel of sendSelectors) {
-          sendBtn = document.querySelector(sel);
-          if (sendBtn && !(sendBtn as HTMLButtonElement).disabled) break;
-        }
-        if (sendBtn) {
-          (sendBtn as HTMLElement).click();
-          return { ok: true };
-        }
-        const formSubmit = inputEl.closest("form")?.querySelector("button[type=submit]");
-        if (formSubmit) {
-          (formSubmit as HTMLElement).click();
-          return { ok: true };
-        }
-        inputEl.dispatchEvent(
-          new KeyboardEvent("keydown", { key: "Enter", code: "Enter", keyCode: 13, which: 13, bubbles: true })
-        );
+      const sendSelectors = [
+        'button[aria-label*="Send"]',
+        'button[aria-label*="send"]',
+        'button[aria-label*="提交"]',
+        'button[aria-label*="发送"]',
+        'button[type="submit"]',
+        'button[data-icon="send"]',
+        'button[data-testid*="send"]',
+        "form button[type=submit]",
+        'button[class*="send"]',
+        '[aria-label*="Send message"]',
+        ".send-button",
+      ];
+      let sendBtn: HTMLElement | null = null;
+      for (const sel of sendSelectors) {
+        sendBtn = document.querySelector(sel);
+        if (sendBtn && !(sendBtn as HTMLButtonElement).disabled) break;
+      }
+      if (sendBtn) {
+        (sendBtn as HTMLElement).click();
         return { ok: true };
-      },
-      params.message
-    );
+      }
+      const formSubmit = inputEl.closest("form")?.querySelector("button[type=submit]");
+      if (formSubmit) {
+        (formSubmit as HTMLElement).click();
+        return { ok: true };
+      }
+      inputEl.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          key: "Enter",
+          code: "Enter",
+          keyCode: 13,
+          which: 13,
+          bubbles: true,
+        }),
+      );
+      return { ok: true };
+    }, params.message);
 
     if (!sent.ok) {
       throw new Error(`Gemini DOM 模拟失败: ${sent.error}`);
@@ -225,16 +228,19 @@ export class GeminiWebClientBrowser {
           (t.includes("你好") && (t.includes("需要") || t.includes("做些什么"))) ||
           /^需要我为你做些什么/i.test(t);
         const isSkip = (t: string) =>
-          skipTexts.some((s) => t.includes(s)) ||
-          isGreeting(t) ||
-          t.length < 20;
+          skipTexts.some((s) => t.includes(s)) || isGreeting(t) || t.length < 20;
 
         const sidebarRoot = document.querySelector('[aria-label*="对话"], [class*="sidebar"], nav');
         const notInSidebar = (el: Element) => !sidebarRoot?.contains(el);
 
         // 排除输入区域：输入框及其父容器（含建议按钮）
-        const inputEl = document.querySelector('[contenteditable="true"], textarea, [placeholder*="Gemini"], [placeholder*="问问"]');
-        const inputRoot = inputEl?.closest("form") ?? inputEl?.closest("[class*='input']") ?? inputEl?.parentElement?.parentElement;
+        const inputEl = document.querySelector(
+          '[contenteditable="true"], textarea, [placeholder*="Gemini"], [placeholder*="问问"]',
+        );
+        const inputRoot =
+          inputEl?.closest("form") ??
+          inputEl?.closest("[class*='input']") ??
+          inputEl?.parentElement?.parentElement;
         const notInInputArea = (el: Element) => !inputRoot?.contains(el);
 
         const main =
@@ -292,7 +298,9 @@ export class GeminiWebClientBrowser {
       // 忽略过短内容（<40 字多为问候/按钮；日志 38 字为误抓问候语）
       const minLen = 40;
       if (result.text && result.text.length < minLen && result.text.length > 0) {
-        console.log(`[Gemini Web Browser] 忽略过短内容(${result.text.length}字): ${result.text.slice(0, 50)}...`);
+        console.log(
+          `[Gemini Web Browser] 忽略过短内容(${result.text.length}字): ${result.text.slice(0, 50)}...`,
+        );
       }
       if (result.text && result.text.length >= minLen) {
         if (result.text !== lastText) {
@@ -309,7 +317,7 @@ export class GeminiWebClientBrowser {
 
     if (!lastText) {
       throw new Error(
-        "Gemini DOM 模拟：未检测到回复。请确保 gemini.google.com 页面已打开、已登录，且输入框可见。"
+        "Gemini DOM 模拟：未检测到回复。请确保 gemini.google.com 页面已打开、已登录，且输入框可见。",
       );
     }
 

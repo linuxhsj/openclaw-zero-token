@@ -7,10 +7,7 @@ import {
   type ToolCall,
   type ToolResultMessage,
 } from "@mariozechner/pi-ai";
-import {
-  ZWebClientBrowser,
-  type ZWebClientOptions,
-} from "../providers/glm-web-client-browser.js";
+import { ZWebClientBrowser, type ZWebClientOptions } from "../providers/glm-web-client-browser.js";
 
 const sessionMap = new Map<string, string>();
 
@@ -505,7 +502,9 @@ export function createZWebStreamFn(cookieOrJson: string): StreamFn {
           emitDelta(mode, tagBuffer);
         }
 
-        console.log(`[ZWebStream] Stream completed. Parts: ${contentParts.length}, Tools: ${accumulatedToolCalls.length}`);
+        console.log(
+          `[ZWebStream] Stream completed. Parts: ${contentParts.length}, Tools: ${accumulatedToolCalls.length}`,
+        );
 
         stream.push({
           type: "done",

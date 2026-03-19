@@ -266,7 +266,8 @@ export class OpenClawApp extends LitElement {
   @state() accessor usageQuery = "";
   // Draft query text (updates immediately as the user types; applied via debounce or "Search").
   @state() accessor usageQueryDraft = "";
-  @state() accessor usageSessionSort: "tokens" | "cost" | "recent" | "messages" | "errors" = "recent";
+  @state() accessor usageSessionSort: "tokens" | "cost" | "recent" | "messages" | "errors" =
+    "recent";
   @state() accessor usageSessionSortDir: "desc" | "asc" = "desc";
   @state() accessor usageRecentSessions: string[] = [];
   @state() accessor usageTimeZone: "local" | "utc" = "local";
@@ -342,7 +343,9 @@ export class OpenClawApp extends LitElement {
   @state() accessor askonceModelsError: string | null = null;
   @state() accessor askonceQueryLoading = false;
   @state() accessor askonceQueryQuestion = "";
-  @state() accessor askonceQueryResult: import("./controllers/askonce.js").AskOnceQueryResult | null = null;
+  @state() accessor askonceQueryResult:
+    | import("./controllers/askonce.js").AskOnceQueryResult
+    | null = null;
   @state() accessor askonceQueryError: string | null = null;
   @state() accessor askonceSelectedModels: string[] = [];
 

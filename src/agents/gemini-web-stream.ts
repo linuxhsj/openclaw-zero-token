@@ -156,7 +156,9 @@ export function createGeminiWebStreamFn(cookieOrJson: string): StreamFn {
 
         console.log(`[GeminiWebStream] Starting run for session: ${sessionKey}`);
         console.log(`[GeminiWebStream] Conversation ID: ${conversationId || "new"}`);
-        console.log(`[GeminiWebStream] Tools: ${tools.length}, prompt length: ${cleanPrompt.length}`);
+        console.log(
+          `[GeminiWebStream] Tools: ${tools.length}, prompt length: ${cleanPrompt.length}`,
+        );
 
         const responseStream = await client.chatCompletions({
           conversationId,
@@ -174,7 +176,12 @@ export function createGeminiWebStreamFn(cookieOrJson: string): StreamFn {
         let buffer = "";
 
         const contentParts: (TextContent | ToolCall)[] = [];
-        const accumulatedToolCalls: { id: string; name: string; arguments: string; index: number }[] = [];
+        const accumulatedToolCalls: {
+          id: string;
+          name: string;
+          arguments: string;
+          index: number;
+        }[] = [];
         const indexMap = new Map<string, number>();
         let nextIndex = 0;
         let currentMode: "text" | "toolcall" = "text";
@@ -407,8 +414,7 @@ export function createGeminiWebStreamFn(cookieOrJson: string): StreamFn {
         const stopReason = accumulatedToolCalls.length > 0 ? "toolUse" : "stop";
         const assistantMessage: AssistantMessage = {
           role: "assistant",
-          content:
-            contentParts.length > 0 ? contentParts : [{ type: "text", text: "" }],
+          content: contentParts.length > 0 ? contentParts : [{ type: "text", text: "" }],
           stopReason,
           api: model.api,
           provider: model.provider,

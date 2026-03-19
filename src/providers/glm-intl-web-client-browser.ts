@@ -43,7 +43,10 @@ function generateSign(): { timestamp: string; nonce: string; sign: string } {
   const a = i % 10;
   const timestamp = A.substring(0, t - 2) + a + A.substring(t - 1, t);
   const nonce = crypto.randomUUID().replace(/-/g, "");
-  const sign = crypto.createHash("md5").update(`${timestamp}-${nonce}-${SIGN_SECRET}`).digest("hex");
+  const sign = crypto
+    .createHash("md5")
+    .update(`${timestamp}-${nonce}-${SIGN_SECRET}`)
+    .digest("hex");
   return { timestamp, nonce, sign };
 }
 
@@ -84,7 +87,7 @@ export class GlmIntlWebClientBrowser {
       "refresh_token",
       "auth_refresh_token",
       "glm_refresh_token",
-      "zai_refresh_token"
+      "zai_refresh_token",
     ];
 
     for (const name of refreshCookieNames) {
@@ -107,7 +110,7 @@ export class GlmIntlWebClientBrowser {
       "auth_token",
       "glm_token",
       "zai_token",
-      "token"
+      "token",
     ];
 
     for (const name of accessTokenCookieNames) {
@@ -174,7 +177,10 @@ export class GlmIntlWebClientBrowser {
       this.page = glmPage;
     } else {
       this.page = await this.context.newPage();
-      await this.page.goto("https://chat.z.ai/", { waitUntil: "domcontentloaded", timeout: 120000 }); // 2 minutes timeout
+      await this.page.goto("https://chat.z.ai/", {
+        waitUntil: "domcontentloaded",
+        timeout: 120000,
+      }); // 2 minutes timeout
     }
 
     const cookies = this.parseCookies();
@@ -216,7 +222,9 @@ export class GlmIntlWebClientBrowser {
 
     const refreshToken = this.getRefreshToken();
     if (!refreshToken || !this.page) {
-      console.warn("[GLM Intl Web Browser] No chatglm_token found, will rely on browser cookies for auth");
+      console.warn(
+        "[GLM Intl Web Browser] No chatglm_token found, will rely on browser cookies for auth",
+      );
       return;
     }
 
@@ -230,7 +238,7 @@ export class GlmIntlWebClientBrowser {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              "Authorization": `Bearer ${refreshToken}`,
+              Authorization: `Bearer ${refreshToken}`,
               "App-Name": "chatglm",
               "X-App-Platform": "pc",
               "X-App-Version": "0.0.1",
@@ -249,9 +257,14 @@ export class GlmIntlWebClientBrowser {
           }
 
           const data = await res.json();
-          const accessToken = data?.result?.access_token ?? data?.result?.accessToken ?? data?.accessToken;
+          const accessToken =
+            data?.result?.access_token ?? data?.result?.accessToken ?? data?.accessToken;
           if (!accessToken) {
-            return { ok: false, status: 200, error: `No accessToken in response: ${JSON.stringify(data).substring(0, 300)}` };
+            return {
+              ok: false,
+              status: 200,
+              error: `No accessToken in response: ${JSON.stringify(data).substring(0, 300)}`,
+            };
           }
           return { ok: true, accessToken };
         } catch (err) {

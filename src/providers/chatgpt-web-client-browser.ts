@@ -1,7 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { chromium } from "playwright-core";
 import type { BrowserContext, Page } from "playwright-core";
-import type { ModelDefinitionConfig } from "../config/types.models.js";
 import { getHeadersWithAuth } from "../browser/cdp.helpers.js";
 import {
   launchOpenClawChrome,
@@ -11,6 +10,7 @@ import {
 } from "../browser/chrome.js";
 import { resolveBrowserConfig, resolveProfile } from "../browser/config.js";
 import { loadConfig } from "../config/io.js";
+import type { ModelDefinitionConfig } from "../config/types.models.js";
 
 export interface ChatGPTWebClientOptions {
   accessToken: string;
@@ -63,7 +63,7 @@ export class ChatGPTWebClientBrowser {
 
     if (browserConfig.attachOnly) {
       console.log(`[ChatGPT Web Browser] Connecting to existing Chrome at ${profile.cdpUrl}`);
-      
+
       let wsUrl: string | null = null;
       for (let i = 0; i < 10; i++) {
         wsUrl = await getChromeWebSocketUrl(profile.cdpUrl, 2000);
@@ -76,13 +76,15 @@ export class ChatGPTWebClientBrowser {
       if (!wsUrl) {
         throw new Error(
           `Failed to connect to Chrome at ${profile.cdpUrl}. ` +
-          `Make sure Chrome is running in debug mode`
+            `Make sure Chrome is running in debug mode`,
         );
       }
 
-      this.browser = (await chromium.connectOverCDP(wsUrl, {
-        headers: getHeadersWithAuth(wsUrl),
-      })).contexts()[0]!;
+      this.browser = (
+        await chromium.connectOverCDP(wsUrl, {
+          headers: getHeadersWithAuth(wsUrl),
+        })
+      ).contexts()[0]!;
 
       const pages = this.browser!.pages();
       const chatgptPage = pages.find((p) => p.url().includes("chatgpt.com"));
@@ -116,9 +118,11 @@ export class ChatGPTWebClientBrowser {
         throw new Error(`Failed to resolve Chrome WebSocket URL from ${cdpUrl}`);
       }
 
-      this.browser = (await chromium.connectOverCDP(wsUrl, {
-        headers: getHeadersWithAuth(wsUrl),
-      })).contexts()[0]!;
+      this.browser = (
+        await chromium.connectOverCDP(wsUrl, {
+          headers: getHeadersWithAuth(wsUrl),
+        })
+      ).contexts()[0]!;
 
       this.page = this.browser!.pages()[0] || (await this.browser!.newPage());
       if (!this.page.url().includes("chatgpt.com")) {
@@ -144,7 +148,7 @@ export class ChatGPTWebClientBrowser {
           await this.browser!.addCookies(cookies);
         } catch (err) {
           console.warn(
-            `[ChatGPT Web Browser] addCookies failed (page may already have session): ${err instanceof Error ? err.message : String(err)}`
+            `[ChatGPT Web Browser] addCookies failed (page may already have session): ${err instanceof Error ? err.message : String(err)}`,
           );
         }
       }
@@ -165,7 +169,7 @@ export class ChatGPTWebClientBrowser {
           const scripts = Array.from(document.scripts);
           return scripts.some((s) => s.src?.includes("oaistatic.com") && s.src?.endsWith(".js"));
         },
-        { timeout: 15000 }
+        { timeout: 15000 },
       );
     } catch {
       console.warn("[ChatGPT Web Browser] oaistatic script not found in 15s, continuing anyway");
@@ -183,52 +187,49 @@ export class ChatGPTWebClientBrowser {
   }): Promise<ReadableStream<Uint8Array>> {
     const { page } = await this.ensureBrowser();
 
-    const sent = await page.evaluate(
-      (msg: string) => {
-        // 多备选选择器适配 ChatGPT 不同版本 UI
-        const inputSelectors = [
-          "#prompt-textarea",
-          "textarea[placeholder]",
-          "textarea",
-          '[contenteditable="true"][data-placeholder]',
-          "[contenteditable='true']",
-        ];
-        let inputEl: HTMLTextAreaElement | HTMLElement | null = null;
-        for (const sel of inputSelectors) {
-          inputEl = document.querySelector(sel);
-          if (inputEl && inputEl.offsetParent !== null) break;
-        }
-        if (!inputEl) return { ok: false, error: "找不到输入框" };
+    const sent = await page.evaluate((msg: string) => {
+      // 多备选选择器适配 ChatGPT 不同版本 UI
+      const inputSelectors = [
+        "#prompt-textarea",
+        "textarea[placeholder]",
+        "textarea",
+        '[contenteditable="true"][data-placeholder]',
+        "[contenteditable='true']",
+      ];
+      let inputEl: HTMLTextAreaElement | HTMLElement | null = null;
+      for (const sel of inputSelectors) {
+        inputEl = document.querySelector(sel);
+        if (inputEl && inputEl.offsetParent !== null) break;
+      }
+      if (!inputEl) return { ok: false, error: "找不到输入框" };
 
-        inputEl.focus();
-        if (inputEl.tagName === "TEXTAREA" || (inputEl as HTMLInputElement).tagName === "INPUT") {
-          (inputEl as HTMLTextAreaElement).value = msg;
-          (inputEl as HTMLTextAreaElement).dispatchEvent(new Event("input", { bubbles: true }));
-        } else {
-          (inputEl as HTMLElement).textContent = msg;
-          (inputEl as HTMLElement).dispatchEvent(new Event("input", { bubbles: true }));
-        }
+      inputEl.focus();
+      if (inputEl.tagName === "TEXTAREA" || (inputEl as HTMLInputElement).tagName === "INPUT") {
+        (inputEl as HTMLTextAreaElement).value = msg;
+        (inputEl as HTMLTextAreaElement).dispatchEvent(new Event("input", { bubbles: true }));
+      } else {
+        (inputEl as HTMLElement).textContent = msg;
+        (inputEl as HTMLElement).dispatchEvent(new Event("input", { bubbles: true }));
+      }
 
-        const sendSelectors = [
-          "#composer-submit-button",
-          'button[data-testid="send-button"]',
-          "button.btn.relative.btn-primary",
-          'button.mb-1.mr-1.flex.h-8.w-8.items-center.justify-center.rounded-full.bg-black',
-          'button[aria-label*="Send"]',
-          'button[type="submit"]',
-          "form button[type=submit]",
-        ];
-        let sendBtn: HTMLElement | null = null;
-        for (const sel of sendSelectors) {
-          sendBtn = document.querySelector(sel);
-          if (sendBtn && !(sendBtn as HTMLButtonElement).disabled) break;
-        }
-        if (!sendBtn) return { ok: false, error: "找不到发送按钮" };
-        (sendBtn as HTMLElement).click();
-        return { ok: true };
-      },
-      params.message
-    );
+      const sendSelectors = [
+        "#composer-submit-button",
+        'button[data-testid="send-button"]',
+        "button.btn.relative.btn-primary",
+        "button.mb-1.mr-1.flex.h-8.w-8.items-center.justify-center.rounded-full.bg-black",
+        'button[aria-label*="Send"]',
+        'button[type="submit"]',
+        "form button[type=submit]",
+      ];
+      let sendBtn: HTMLElement | null = null;
+      for (const sel of sendSelectors) {
+        sendBtn = document.querySelector(sel);
+        if (sendBtn && !(sendBtn as HTMLButtonElement).disabled) break;
+      }
+      if (!sendBtn) return { ok: false, error: "找不到发送按钮" };
+      (sendBtn as HTMLElement).click();
+      return { ok: true };
+    }, params.message);
 
     if (!sent.ok) {
       throw new Error(`ChatGPT DOM 模拟失败: ${sent.error}`);
@@ -247,10 +248,9 @@ export class ChatGPTWebClientBrowser {
       await new Promise((r) => setTimeout(r, pollIntervalMs));
 
       const result = await page.evaluate(() => {
-        const clean = (t: string) =>
-          t.replace(/[\u200B-\u200D\uFEFF]/g, "").trim();
+        const clean = (t: string) => t.replace(/[\u200B-\u200D\uFEFF]/g, "").trim();
         const els = document.querySelectorAll(
-          'div[data-message-author-role="assistant"], .agent-turn [data-message-author-role="assistant"], [class*="markdown"], [class*="assistant"]'
+          'div[data-message-author-role="assistant"], .agent-turn [data-message-author-role="assistant"], [class*="markdown"], [class*="assistant"]',
         );
         const last = els.length > 0 ? els[els.length - 1] : null;
         const text = last ? clean(last.textContent ?? "") : "";
@@ -272,7 +272,7 @@ export class ChatGPTWebClientBrowser {
 
     if (!lastText) {
       throw new Error(
-        "ChatGPT DOM 模拟：未检测到回复。请确保 chatgpt.com 页面已打开并登录，且输入框可见。"
+        "ChatGPT DOM 模拟：未检测到回复。请确保 chatgpt.com 页面已打开并登录，且输入框可见。",
       );
     }
 
@@ -379,7 +379,9 @@ export class ChatGPTWebClientBrowser {
 
         async function tryFetchWithSentinel(accessToken: string | undefined, deviceId: string) {
           const scripts = Array.from(document.scripts);
-          const assetSrc = scripts.map((s) => s.src).find((s) => s?.includes("oaistatic.com") && s.endsWith(".js"));
+          const assetSrc = scripts
+            .map((s) => s.src)
+            .find((s) => s?.includes("oaistatic.com") && s.endsWith(".js"));
           const assetUrl = assetSrc || "https://cdn.oaistatic.com/assets/i5bamk05qmvsi6c3.js";
 
           try {
@@ -425,7 +427,10 @@ export class ChatGPTWebClientBrowser {
 
         const session = await getSession();
         const accessToken = session?.accessToken;
-        const deviceId = (session as { oaiDeviceId?: string })?.oaiDeviceId ?? globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2);
+        const deviceId =
+          (session as { oaiDeviceId?: string })?.oaiDeviceId ??
+          globalThis.crypto?.randomUUID?.() ??
+          Math.random().toString(36).slice(2);
 
         const sentinelResult = await tryFetchWithSentinel(accessToken, deviceId);
         const res =
@@ -462,28 +467,29 @@ export class ChatGPTWebClientBrowser {
     if (!responseData.ok) {
       if (responseData.status === 403) {
         console.log(
-          "[ChatGPT Web Browser] 403 风控，尝试 DOM 模拟 fallback（请求由真实浏览器发起，不易触发风控）"
+          "[ChatGPT Web Browser] 403 风控，尝试 DOM 模拟 fallback（请求由真实浏览器发起，不易触发风控）",
         );
         return this.chatCompletionsViaDOM({
           message: params.message,
           signal: params.signal,
         });
       }
-      const sentinelHint =
-        responseData.sentinelError
-          ? ` Sentinel: ${responseData.sentinelError}`
-          : " 若持续 403，需在 chatgpt.com 控制台检查 oaistatic 脚本导出名是否变更。";
+      const sentinelHint = responseData.sentinelError
+        ? ` Sentinel: ${responseData.sentinelError}`
+        : " 若持续 403，需在 chatgpt.com 控制台检查 oaistatic 脚本导出名是否变更。";
       if (responseData.status === 401) {
-        throw new Error(
-          "ChatGPT 认证失败，请重新运行 ./onboard.sh 刷新 session。"
-        );
+        throw new Error("ChatGPT 认证失败，请重新运行 ./onboard.sh 刷新 session。");
       }
-      throw new Error(`ChatGPT API 错误 ${responseData.status}: ${responseData.error?.slice(0, 200) || ""}`);
+      throw new Error(
+        `ChatGPT API 错误 ${responseData.status}: ${responseData.error?.slice(0, 200) || ""}`,
+      );
     }
 
     console.log(`[ChatGPT Web Browser] Response length: ${responseData.data?.length || 0} bytes`);
     const sample = responseData.data?.slice(0, 1800) ?? "";
-    console.log(`[ChatGPT Web Browser] SSE sample:\n${sample}${(responseData.data?.length ?? 0) > 1800 ? "\n...(truncated)" : ""}`);
+    console.log(
+      `[ChatGPT Web Browser] SSE sample:\n${sample}${(responseData.data?.length ?? 0) > 1800 ? "\n...(truncated)" : ""}`,
+    );
 
     const encoder = new TextEncoder();
     const stream = new ReadableStream({

@@ -49,11 +49,11 @@ export class ClaudeWebClient {
   private async fetchHeaders() {
     return {
       "Content-Type": "application/json",
-      "Cookie": this.cookie,
+      Cookie: this.cookie,
       "User-Agent": this.userAgent,
-      "Accept": "text/event-stream",
-      "Referer": "https://claude.ai/",
-      "Origin": "https://claude.ai",
+      Accept: "text/event-stream",
+      Referer: "https://claude.ai/",
+      Origin: "https://claude.ai",
       "anthropic-client-platform": "web_claude_ai",
       "anthropic-device-id": this.deviceId,
       "Sec-Fetch-Dest": "empty",
@@ -98,7 +98,7 @@ export class ClaudeWebClient {
       : `${this.baseUrl}/chat_conversations`;
 
     console.log(`[Claude Web] Creating conversation at: ${url}`);
-    
+
     const response = await fetch(url, {
       method: "POST",
       headers,
@@ -109,7 +109,7 @@ export class ClaudeWebClient {
     });
 
     console.log(`[Claude Web] Create conversation response: ${response.status}`);
-    
+
     if (!response.ok) {
       const errorText = await response.text().catch(() => "");
       console.error(`[Claude Web] Create conversation failed: ${response.status} - ${errorText}`);
@@ -175,10 +175,10 @@ export class ClaudeWebClient {
     if (!response.ok) {
       const errorText = await response.text().catch(() => "");
       console.error(`[Claude Web] Message failed: ${response.status} - ${errorText}`);
-      
+
       if (response.status === 401) {
         throw new Error(
-          "Authentication failed. Please re-run onboarding to refresh your Claude session."
+          "Authentication failed. Please re-run onboarding to refresh your Claude session.",
         );
       }
       throw new Error(`Claude API error: ${response.status}`);

@@ -82,7 +82,8 @@ export async function applyAuthChoiceQwenWeb(
 
       const authData = JSON.stringify({
         cookie,
-        userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        userAgent:
+          "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
       });
       await setQwenWebCookie({ cookie: authData }, agentDir);
     }

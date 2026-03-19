@@ -19,9 +19,7 @@ export interface ZWebAuthOptions {
   headless?: boolean;
 }
 
-export async function loginZWeb(
-  options: ZWebAuthOptions = {},
-): Promise<ZWebAuthResult> {
+export async function loginZWeb(options: ZWebAuthOptions = {}): Promise<ZWebAuthResult> {
   const { onProgress = console.log } = options;
 
   const rootConfig = loadConfig();

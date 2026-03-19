@@ -2,17 +2,17 @@
  * 适配器注册表
  */
 
-import type { ModelAdapter } from '../types.js';
-import { ClaudeAdapter } from './claude.js';
-import { ChatGPTAdapter } from './chatgpt.js';
-import { GeminiAdapter } from './gemini.js';
-import { DeepSeekAdapter } from './deepseek.js';
-import { QwenAdapter } from './qwen.js';
-import { KimiAdapter } from './kimi.js';
-import { GLMAdapter } from './glm.js';
-import { DoubaoAdapter } from './doubao.js';
-import { GrokAdapter } from './grok.js';
-import { QwenCNAdapter } from './qwen-cn.js';
+import type { ModelAdapter } from "../types.js";
+import { ChatGPTAdapter } from "./chatgpt.js";
+import { ClaudeAdapter } from "./claude.js";
+import { DeepSeekAdapter } from "./deepseek.js";
+import { DoubaoAdapter } from "./doubao.js";
+import { GeminiAdapter } from "./gemini.js";
+import { GLMAdapter } from "./glm.js";
+import { GrokAdapter } from "./grok.js";
+import { KimiAdapter } from "./kimi.js";
+import { QwenCNAdapter } from "./qwen-cn.js";
+import { QwenAdapter } from "./qwen.js";
 
 /**
  * 适配器注册表
@@ -83,12 +83,10 @@ export class AdapterRegistry {
       adapters.map(async (adapter) => ({
         adapter,
         isAvailable: await adapter.isAvailable(),
-      }))
+      })),
     );
 
-    return availabilityChecks
-      .filter((check) => check.isAvailable)
-      .map((check) => check.adapter);
+    return availabilityChecks.filter((check) => check.isAvailable).map((check) => check.adapter);
   }
 }
 

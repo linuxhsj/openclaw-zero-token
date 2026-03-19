@@ -2,7 +2,7 @@
  * 适配器基类
  */
 
-import type { ModelAdapter, ModelResponse, AdapterQueryOptions } from '../types.js';
+import type { ModelAdapter, ModelResponse, AdapterQueryOptions } from "../types.js";
 
 /**
  * 适配器抽象基类
@@ -31,10 +31,10 @@ export abstract class BaseAdapter implements ModelAdapter {
    */
   protected createResponse(
     modelId: string,
-    status: ModelResponse['status'],
-    content: string = '',
+    status: ModelResponse["status"],
+    content: string = "",
     error?: string,
-    startTime: number = Date.now()
+    startTime: number = Date.now(),
   ): ModelResponse {
     return {
       modelId,

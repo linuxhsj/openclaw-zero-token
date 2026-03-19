@@ -1,7 +1,6 @@
 import crypto from "node:crypto";
 import { chromium } from "playwright-core";
 import type { BrowserContext, Page } from "playwright-core";
-import type { ModelDefinitionConfig } from "../config/types.models.js";
 import { getHeadersWithAuth } from "../browser/cdp.helpers.js";
 import {
   launchOpenClawChrome,
@@ -11,6 +10,7 @@ import {
 } from "../browser/chrome.js";
 import { resolveBrowserConfig, resolveProfile } from "../browser/config.js";
 import { loadConfig } from "../config/io.js";
+import type { ModelDefinitionConfig } from "../config/types.models.js";
 
 export interface QwenWebClientOptions {
   sessionToken: string;
@@ -57,7 +57,7 @@ export class QwenWebClientBrowser {
 
     if (browserConfig.attachOnly) {
       console.log(`[Qwen Web Browser] Connecting to existing Chrome at ${profile.cdpUrl}`);
-      
+
       let wsUrl: string | null = null;
       for (let i = 0; i < 10; i++) {
         wsUrl = await getChromeWebSocketUrl(profile.cdpUrl, 2000);
@@ -70,26 +70,28 @@ export class QwenWebClientBrowser {
       if (!wsUrl) {
         throw new Error(
           `Failed to connect to Chrome at ${profile.cdpUrl}. ` +
-          `Make sure Chrome is running in debug mode`
+            `Make sure Chrome is running in debug mode`,
         );
       }
 
-      this.browser = (await chromium.connectOverCDP(wsUrl, {
-        headers: getHeadersWithAuth(wsUrl),
-      })).contexts()[0]!;
+      this.browser = (
+        await chromium.connectOverCDP(wsUrl, {
+          headers: getHeadersWithAuth(wsUrl),
+        })
+      ).contexts()[0]!;
 
       const pages = this.browser!.pages();
-      let qwenPage = pages.find(p => p.url().includes('qwen.ai'));
-      
+      let qwenPage = pages.find((p) => p.url().includes("qwen.ai"));
+
       if (qwenPage) {
         console.log(`[Qwen Web Browser] Found existing Qwen page`);
         this.page = qwenPage;
       } else {
         console.log(`[Qwen Web Browser] Creating new page`);
         this.page = await this.browser.newPage();
-        await this.page.goto('https://chat.qwen.ai/', { waitUntil: 'domcontentloaded' });
+        await this.page.goto("https://chat.qwen.ai/", { waitUntil: "domcontentloaded" });
       }
-      
+
       console.log(`[Qwen Web Browser] Connected successfully`);
     } else {
       this.running = await launchOpenClawChrome(browserConfig, profile);
@@ -109,9 +111,11 @@ export class QwenWebClientBrowser {
         throw new Error(`Failed to resolve Chrome WebSocket URL from ${cdpUrl}`);
       }
 
-      this.browser = (await chromium.connectOverCDP(wsUrl, {
-        headers: getHeadersWithAuth(wsUrl),
-      })).contexts()[0]!;
+      this.browser = (
+        await chromium.connectOverCDP(wsUrl, {
+          headers: getHeadersWithAuth(wsUrl),
+        })
+      ).contexts()[0]!;
 
       this.page = this.browser!.pages()[0] || (await this.browser!.newPage());
     }
@@ -157,10 +161,10 @@ export class QwenWebClientBrowser {
         try {
           const url = `${baseUrl}/api/v2/chats/new`;
           console.log(`[Browser] Creating chat: ${url}`);
-          
+
           const controller = new AbortController();
           timer = setTimeout(() => controller.abort(), timeoutMs);
-          
+
           const res = await fetch(url, {
             method: "POST",
             headers: {
@@ -169,11 +173,14 @@ export class QwenWebClientBrowser {
             body: JSON.stringify({}),
             signal: controller.signal,
           });
-          
+
           clearTimeout(timer);
 
           console.log(`[Browser] Create chat response status: ${res.status}`);
-          console.log(`[Browser] Create chat response headers:`, Object.fromEntries(res.headers.entries()));
+          console.log(
+            `[Browser] Create chat response headers:`,
+            Object.fromEntries(res.headers.entries()),
+          );
 
           if (!res.ok) {
             const errorText = await res.text();
@@ -204,7 +211,9 @@ export class QwenWebClientBrowser {
       console.error(`[Qwen Web Browser] Failed to create chat`);
       console.error(`[Qwen Web Browser] Error: ${createChatResult.error}`);
       console.error(`[Qwen Web Browser] Full result:`, JSON.stringify(createChatResult));
-      throw new Error(`Failed to create Qwen chat: ${createChatResult.error || 'No chat_id in response'}`);
+      throw new Error(
+        `Failed to create Qwen chat: ${createChatResult.error || "No chat_id in response"}`,
+      );
     }
 
     const chatId = createChatResult.chatId;
@@ -219,7 +228,7 @@ export class QwenWebClientBrowser {
         try {
           const url = `${baseUrl}/api/v2/chat/completions?chat_id=${chatId}`;
           console.log(`[Browser] Sending message: ${url} (timeout: ${timeoutMs}ms)`);
-          
+
           const controller = new AbortController();
           timer = setTimeout(() => controller.abort(), timeoutMs);
           const requestBody = {
@@ -248,12 +257,12 @@ export class QwenWebClientBrowser {
           };
 
           console.log(`[Browser] Request body:`, JSON.stringify(requestBody, null, 2));
-          
+
           const res = await fetch(url, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              "Accept": "text/event-stream",
+              Accept: "text/event-stream",
             },
             body: JSON.stringify(requestBody),
             signal: controller.signal,
@@ -295,13 +304,24 @@ export class QwenWebClientBrowser {
           if (typeof timer !== "undefined") clearTimeout(timer);
           const msg = String(err);
           if (msg.includes("aborted") || msg.includes("signal")) {
-            return { ok: false, status: 408, error: `Qwen API request timed out after ${timeoutMs}ms` };
+            return {
+              ok: false,
+              status: 408,
+              error: `Qwen API request timed out after ${timeoutMs}ms`,
+            };
           }
           console.error(`[Browser] Fetch error:`, err);
           return { ok: false, status: 500, error: msg };
         }
       },
-      { baseUrl: this.baseUrl, chatId, model: model, message: params.message, fid, timeoutMs: fetchTimeoutMs },
+      {
+        baseUrl: this.baseUrl,
+        chatId,
+        model: model,
+        message: params.message,
+        fid,
+        timeoutMs: fetchTimeoutMs,
+      },
     );
 
     if (!responseData || !responseData.ok) {
@@ -310,20 +330,24 @@ export class QwenWebClientBrowser {
 
       if (responseData?.status === 401 || responseData?.status === 403) {
         throw new Error(
-          "Authentication failed. Please re-run onboarding to refresh your Qwen session."
+          "Authentication failed. Please re-run onboarding to refresh your Qwen session.",
         );
       }
       if (responseData?.status === 408) {
         throw new Error(
           `Qwen API request timed out. ${responseData?.error || ""} ` +
-            "Ensure chat.qwen.ai is reachable, Chrome is connected, and you are logged in."
+            "Ensure chat.qwen.ai is reachable, Chrome is connected, and you are logged in.",
         );
       }
-      throw new Error(`Qwen API error: ${responseData?.status || "unknown"} - ${responseData?.error || "Request failed"}`);
+      throw new Error(
+        `Qwen API error: ${responseData?.status || "unknown"} - ${responseData?.error || "Request failed"}`,
+      );
     }
 
     console.log(`[Qwen Web Browser] Response data length: ${responseData.data?.length || 0} bytes`);
-    console.log(`[Qwen Web Browser] Response preview: ${responseData.data?.substring(0, 300) || 'empty'}`);
+    console.log(
+      `[Qwen Web Browser] Response preview: ${responseData.data?.substring(0, 300) || "empty"}`,
+    );
 
     const encoder = new TextEncoder();
     const stream = new ReadableStream({

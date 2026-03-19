@@ -2,7 +2,7 @@
  * AskOnce 类型定义
  */
 
-import type { Readable } from 'node:stream';
+import type { Readable } from "node:stream";
 
 /**
  * 模型响应结果
@@ -15,7 +15,7 @@ export interface ModelResponse {
   /** 提供商标识 */
   provider: string;
   /** 响应状态 */
-  status: 'pending' | 'streaming' | 'completed' | 'error' | 'timeout';
+  status: "pending" | "streaming" | "completed" | "error" | "timeout";
   /** 响应文本内容 */
   content: string;
   /** 错误信息 (如果失败) */
@@ -90,7 +90,7 @@ export interface ModelAdapter {
   queryStream?(
     question: string,
     options: AdapterQueryOptions,
-    onChunk: (chunk: string) => void
+    onChunk: (chunk: string) => void,
   ): Promise<ModelResponse>;
 }
 
@@ -113,7 +113,7 @@ export interface AdapterQueryOptions {
  */
 export interface ProgressEvent {
   /** 事件类型 */
-  type: 'start' | 'progress' | 'complete' | 'error';
+  type: "start" | "progress" | "complete" | "error";
   /** 模型 ID */
   modelId: string;
   /** 进度数据 */
@@ -134,7 +134,7 @@ export type ProgressCallback = (event: ProgressEvent) => void;
  * 流式事件类型
  */
 export interface StreamEvent {
-  type: 'text_delta' | 'text_start' | 'thinking_delta' | 'thinking_start' | 'done' | 'error';
+  type: "text_delta" | "text_start" | "thinking_delta" | "thinking_start" | "done" | "error";
   delta?: string;
   contentIndex?: number;
   reason?: string;
@@ -146,10 +146,7 @@ export interface StreamEvent {
  */
 export interface StreamAdapter {
   /** 流式查询 */
-  queryStream(
-    question: string,
-    options: AdapterQueryOptions
-  ): ReadableStream<StreamEvent>;
+  queryStream(question: string, options: AdapterQueryOptions): ReadableStream<StreamEvent>;
 }
 
 /**
@@ -170,11 +167,5 @@ export const DEFAULT_CONFIG: AskOnceConfig = {
   timeout: 60000,
   maxRetries: 2,
   concurrencyLimit: 10,
-  defaultModels: [
-    'claude-web',
-    'chatgpt-web',
-    'gemini-web',
-    'deepseek-web',
-    'qwen-web',
-  ],
+  defaultModels: ["claude-web", "chatgpt-web", "gemini-web", "deepseek-web", "qwen-web"],
 };

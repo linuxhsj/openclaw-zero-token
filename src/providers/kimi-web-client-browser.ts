@@ -1,6 +1,5 @@
 import { chromium } from "playwright-core";
 import type { BrowserContext, Page } from "playwright-core";
-import type { ModelDefinitionConfig } from "../config/types.models.js";
 import { getHeadersWithAuth } from "../browser/cdp.helpers.js";
 import {
   launchOpenClawChrome,
@@ -10,6 +9,7 @@ import {
 } from "../browser/chrome.js";
 import { resolveBrowserConfig, resolveProfile } from "../browser/config.js";
 import { loadConfig } from "../config/io.js";
+import type { ModelDefinitionConfig } from "../config/types.models.js";
 
 export interface KimiWebClientOptions {
   cookie: string;
@@ -65,16 +65,18 @@ export class KimiWebClientBrowser {
       }
       if (!wsUrl) {
         throw new Error(
-          `Failed to connect to Chrome at ${profile.cdpUrl}. Make sure Chrome is running in debug mode (./start-chrome-debug.sh)`
+          `Failed to connect to Chrome at ${profile.cdpUrl}. Make sure Chrome is running in debug mode (./start-chrome-debug.sh)`,
         );
       }
 
-      this.browser = (await chromium
-        .connectOverCDP(wsUrl, { headers: getHeadersWithAuth(wsUrl) }))
-        .contexts()[0]!;
+      this.browser = (
+        await chromium.connectOverCDP(wsUrl, { headers: getHeadersWithAuth(wsUrl) })
+      ).contexts()[0]!;
 
       const pages = this.browser!.pages();
-      let kimiPage = pages.find((p) => p.url().includes("kimi.com") || p.url().includes("moonshot.cn"));
+      let kimiPage = pages.find(
+        (p) => p.url().includes("kimi.com") || p.url().includes("moonshot.cn"),
+      );
       if (kimiPage) {
         this.page = kimiPage;
       } else {
@@ -92,9 +94,9 @@ export class KimiWebClientBrowser {
       }
       if (!wsUrl) throw new Error(`Failed to resolve Chrome WebSocket URL from ${cdpUrl}`);
 
-      this.browser = (await chromium
-        .connectOverCDP(wsUrl, { headers: getHeadersWithAuth(wsUrl) }))
-        .contexts()[0]!;
+      this.browser = (
+        await chromium.connectOverCDP(wsUrl, { headers: getHeadersWithAuth(wsUrl) })
+      ).contexts()[0]!;
       this.page = this.browser!.pages()[0] || (await this.browser!.newPage());
     }
 
@@ -107,7 +109,13 @@ export class KimiWebClientBrowser {
         const nameStr = name?.trim() ?? "";
         const valueStr = valueParts.join("=").trim();
         if (!nameStr) return null;
-        const cookie: { name: string; value: string; domain: string; path: string; secure?: boolean } = {
+        const cookie: {
+          name: string;
+          value: string;
+          domain: string;
+          path: string;
+          secure?: boolean;
+        } = {
           name: nameStr,
           value: valueStr,
           domain,
@@ -124,7 +132,7 @@ export class KimiWebClientBrowser {
           await this.browser!.addCookies(cookies);
         } catch (err) {
           console.warn(
-            `[Kimi Web] addCookies failed (page may already have session): ${err instanceof Error ? err.message : String(err)}`
+            `[Kimi Web] addCookies failed (page may already have session): ${err instanceof Error ? err.message : String(err)}`,
           );
         }
       }
@@ -148,9 +156,7 @@ export class KimiWebClientBrowser {
     const cookies = await browser.cookies([this.baseUrl]);
     const kimiAuth = cookies.find((c) => c.name === "kimi-auth")?.value;
     if (!kimiAuth) {
-      throw new Error(
-        "Kimi: 未找到 kimi-auth Cookie，请在 Chrome 中登录 www.kimi.com 后再试"
-      );
+      throw new Error("Kimi: 未找到 kimi-auth Cookie，请在 Chrome 中登录 www.kimi.com 后再试");
     }
 
     const result = await page.evaluate(
@@ -181,23 +187,20 @@ export class KimiWebClientBrowser {
         dv.setUint32(1, enc.byteLength, false);
         new Uint8Array(buf, 5).set(enc);
 
-        const res = await fetch(
-          `${baseUrl}/apiv2/kimi.gateway.chat.v1.ChatService/Chat`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/connect+json",
-              "Connect-Protocol-Version": "1",
-              Accept: "*/*",
-              Origin: baseUrl,
-              Referer: `${baseUrl}/`,
-              "X-Language": "zh-CN",
-              "X-Msh-Platform": "web",
-              Authorization: `Bearer ${kimiAuthToken}`,
-            },
-            body: buf,
-          }
-        );
+        const res = await fetch(`${baseUrl}/apiv2/kimi.gateway.chat.v1.ChatService/Chat`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/connect+json",
+            "Connect-Protocol-Version": "1",
+            Accept: "*/*",
+            Origin: baseUrl,
+            Referer: `${baseUrl}/`,
+            "X-Language": "zh-CN",
+            "X-Msh-Platform": "web",
+            Authorization: `Bearer ${kimiAuthToken}`,
+          },
+          body: buf,
+        });
 
         if (!res.ok) {
           const text = await res.text();
@@ -208,11 +211,7 @@ export class KimiWebClientBrowser {
         const texts: string[] = [];
         let o = 0;
         while (o + 5 <= u8.length) {
-          const len = new DataView(
-            u8.buffer,
-            u8.byteOffset + o + 1,
-            4
-          ).getUint32(0, false);
+          const len = new DataView(u8.buffer, u8.byteOffset + o + 1, 4).getUint32(0, false);
           if (o + 5 + len > u8.length) break;
           const chunk = u8.slice(o + 5, o + 5 + len);
           try {
@@ -220,13 +219,11 @@ export class KimiWebClientBrowser {
             if (obj.error) {
               return {
                 ok: false as const,
-                error: obj.error.message || obj.error.code || JSON.stringify(obj.error).slice(0, 200),
+                error:
+                  obj.error.message || obj.error.code || JSON.stringify(obj.error).slice(0, 200),
               };
             }
-            if (
-              obj.block?.text?.content &&
-              ["set", "append"].includes(obj.op || "")
-            ) {
+            if (obj.block?.text?.content && ["set", "append"].includes(obj.op || "")) {
               texts.push(obj.block.text.content);
             }
             if (obj.done) break;
@@ -248,7 +245,7 @@ export class KimiWebClientBrowser {
             : params.model.includes("k1")
               ? "SCENARIO_K1"
               : "SCENARIO_K2",
-      }
+      },
     );
 
     if (!result.ok) {
@@ -277,7 +274,16 @@ export class KimiWebClientBrowser {
 
   async discoverModels(): Promise<ModelDefinitionConfig[]> {
     return [
-      { id: "moonshot-v1-32k", name: "Moonshot v1 32K", api: "kimi-web", reasoning: false, input: ["text"], cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }, contextWindow: 32000, maxTokens: 4096 },
+      {
+        id: "moonshot-v1-32k",
+        name: "Moonshot v1 32K",
+        api: "kimi-web",
+        reasoning: false,
+        input: ["text"],
+        cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+        contextWindow: 32000,
+        maxTokens: 4096,
+      },
     ] as ModelDefinitionConfig[];
   }
 }

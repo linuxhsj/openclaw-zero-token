@@ -19,9 +19,7 @@ export interface GrokWebAuthOptions {
   headless?: boolean;
 }
 
-export async function loginGrokWeb(
-  options: GrokWebAuthOptions = {},
-): Promise<GrokWebAuthResult> {
+export async function loginGrokWeb(options: GrokWebAuthOptions = {}): Promise<GrokWebAuthResult> {
   const { onProgress = console.log, headless = false } = options;
 
   const rootConfig = loadConfig();

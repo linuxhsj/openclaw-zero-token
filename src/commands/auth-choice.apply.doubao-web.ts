@@ -127,23 +127,24 @@ export async function applyAuthChoiceDoubaoWeb(
         "Doubao Login",
       );
 
-      sessionid = (await prompter.text({
+      sessionid = await prompter.text({
         message: "Paste sessionid cookie",
         hint: "The sessionid value from cookies",
         placeholder: "...",
         validate: (value) => (value.trim().length > 0 ? undefined : "Required"),
-      }));
+      });
 
-      ttwid = (await prompter.text({
+      ttwid = await prompter.text({
         message: "Paste ttwid cookie (Optional)",
         hint: "The ttwid value from cookies - optional but recommended",
         placeholder: "Optional",
-      }));
+      });
 
       const authData = JSON.stringify({
         sessionid,
         ttwid: ttwid || undefined,
-        userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        userAgent:
+          "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
       });
       await setDoubaoWebCookie({ cookie: authData }, agentDir);
     }

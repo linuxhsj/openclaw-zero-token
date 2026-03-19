@@ -35,7 +35,7 @@ export async function loginClaudeWeb(params: {
     if (!wsUrl) {
       throw new Error(
         `Failed to connect to Chrome at ${profile.cdpUrl}. ` +
-          "Make sure Chrome is running in debug mode (./start-chrome-debug.sh)"
+          "Make sure Chrome is running in debug mode (./start-chrome-debug.sh)",
       );
     }
     running = { cdpPort: profile.cdpPort };
@@ -46,7 +46,9 @@ export async function loginClaudeWeb(params: {
   }
 
   try {
-    const cdpUrl = browserConfig.attachOnly ? profile.cdpUrl : `http://127.0.0.1:${running.cdpPort}`;
+    const cdpUrl = browserConfig.attachOnly
+      ? profile.cdpUrl
+      : `http://127.0.0.1:${running.cdpPort}`;
     let wsUrl: string | null = null;
 
     params.onProgress("Waiting for browser debugger...");
@@ -90,10 +92,7 @@ export async function loginClaudeWeb(params: {
         }
 
         try {
-          const cookies = await context.cookies([
-            "https://claude.ai",
-            "https://www.claude.ai",
-          ]);
+          const cookies = await context.cookies(["https://claude.ai", "https://www.claude.ai"]);
           if (cookies.length === 0) {
             console.log(`[Claude] No cookies found in context yet.`);
             return;
@@ -104,21 +103,26 @@ export async function loginClaudeWeb(params: {
 
           // Look for sessionKey cookie (sk-ant-sid01-xxx or sk-ant-sid02-xxx format)
           const sessionKeyCookie = cookies.find(
-            (c: { name: string; value: string }) => 
-              c.name === "sessionKey" || 
-              c.value.startsWith("sk-ant-sid01-") || 
+            (c: { name: string; value: string }) =>
+              c.name === "sessionKey" ||
+              c.value.startsWith("sk-ant-sid01-") ||
               c.value.startsWith("sk-ant-sid02-"),
           );
 
           if (sessionKeyCookie || capturedSessionKey) {
             const finalSessionKey = capturedSessionKey || sessionKeyCookie?.value || "";
-            
-            if (finalSessionKey.startsWith("sk-ant-sid01-") || finalSessionKey.startsWith("sk-ant-sid02-")) {
+
+            if (
+              finalSessionKey.startsWith("sk-ant-sid01-") ||
+              finalSessionKey.startsWith("sk-ant-sid02-")
+            ) {
               resolved = true;
               clearTimeout(timeout);
               console.log(`[Claude] sessionKey captured!`);
 
-              const cookieString = cookies.map((c: { name: string; value: string }) => `${c.name}=${c.value}`).join("; ");
+              const cookieString = cookies
+                .map((c: { name: string; value: string }) => `${c.name}=${c.value}`)
+                .join("; ");
 
               resolve({
                 sessionKey: finalSessionKey,
@@ -126,7 +130,9 @@ export async function loginClaudeWeb(params: {
                 userAgent,
               });
             } else {
-              console.log(`[Claude] Waiting for valid sessionKey (sk-ant-sid01-xxx or sk-ant-sid02-xxx format)...`);
+              console.log(
+                `[Claude] Waiting for valid sessionKey (sk-ant-sid01-xxx or sk-ant-sid02-xxx format)...`,
+              );
             }
           } else {
             console.log(`[Claude] Waiting for sessionKey cookie...`);
@@ -136,25 +142,32 @@ export async function loginClaudeWeb(params: {
         }
       };
 
-      page.on("request", async (request: { url: () => string; headers: () => Record<string, string> }) => {
-        const url = request.url();
-        if (url.includes("claude.ai")) {
-          const headers = request.headers();
-          const cookie = headers["cookie"];
-          
-          // Try to extract sessionKey from cookie header
-          if (cookie) {
-            const sessionKeyMatch = cookie.match(/sessionKey=([^;]+)/);
-            if (sessionKeyMatch && (sessionKeyMatch[1].startsWith("sk-ant-sid01-") || sessionKeyMatch[1].startsWith("sk-ant-sid02-"))) {
-              if (!capturedSessionKey) {
-                console.log(`[Claude] Captured sessionKey from request.`);
-                capturedSessionKey = sessionKeyMatch[1];
+      page.on(
+        "request",
+        async (request: { url: () => string; headers: () => Record<string, string> }) => {
+          const url = request.url();
+          if (url.includes("claude.ai")) {
+            const headers = request.headers();
+            const cookie = headers["cookie"];
+
+            // Try to extract sessionKey from cookie header
+            if (cookie) {
+              const sessionKeyMatch = cookie.match(/sessionKey=([^;]+)/);
+              if (
+                sessionKeyMatch &&
+                (sessionKeyMatch[1].startsWith("sk-ant-sid01-") ||
+                  sessionKeyMatch[1].startsWith("sk-ant-sid02-"))
+              ) {
+                if (!capturedSessionKey) {
+                  console.log(`[Claude] Captured sessionKey from request.`);
+                  capturedSessionKey = sessionKeyMatch[1];
+                }
+                await tryResolve();
               }
-              await tryResolve();
             }
           }
-        }
-      });
+        },
+      );
 
       page.on("response", async (response: { url: () => string; ok: () => boolean }) => {
         const url = response.url();

@@ -46,14 +46,16 @@ export async function loginDoubaoWeb(params: {
   let didLaunch = false;
 
   if (useAttach) {
-    const cdpUrl = browserConfig.attachOnly ? profile.cdpUrl : `http://127.0.0.1:${existingCdpPort}`;
+    const cdpUrl = browserConfig.attachOnly
+      ? profile.cdpUrl
+      : `http://127.0.0.1:${existingCdpPort}`;
     params.onProgress(`Connecting to existing Chrome at ${cdpUrl}...`);
 
     const isReachable = await isChromeReachable(cdpUrl, 1000);
     if (!isReachable) {
       throw new Error(
         `Cannot connect to Chrome at ${cdpUrl}. ` +
-          "Make sure Chrome is running in debug mode (./start-chrome-debug.sh)"
+          "Make sure Chrome is running in debug mode (./start-chrome-debug.sh)",
       );
     }
 
@@ -81,7 +83,9 @@ export async function loginDoubaoWeb(params: {
 
   try {
     const cdpUrl = useAttach
-      ? (browserConfig.attachOnly ? profile.cdpUrl : `http://127.0.0.1:${existingCdpPort}`)
+      ? browserConfig.attachOnly
+        ? profile.cdpUrl
+        : `http://127.0.0.1:${existingCdpPort}`
       : `http://127.0.0.1:${running.cdpPort}`;
     let wsUrl: string | null = null;
 
@@ -125,10 +129,7 @@ export async function loginDoubaoWeb(params: {
         }
 
         try {
-          const cookies = await context.cookies([
-            "https://www.doubao.com",
-            "https://doubao.com",
-          ]);
+          const cookies = await context.cookies(["https://www.doubao.com", "https://doubao.com"]);
           if (cookies.length === 0) {
             console.log(`[Doubao] No cookies found in context yet.`);
             return;
@@ -145,9 +146,9 @@ export async function loginDoubaoWeb(params: {
             resolved = true;
             clearTimeout(timeout);
             console.log(`[Doubao] sessionid captured!`);
-            
+
             const cookieString = cookies.map((c) => `${c.name}=${c.value}`).join("; ");
-            
+
             resolve({
               sessionid: sessionidCookie.value,
               ttwid: ttwidCookie?.value,

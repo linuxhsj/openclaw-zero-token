@@ -90,36 +90,43 @@ export async function loginGlmIntlWeb(
           const currentUrl = window.location.href;
 
           // Check for various possible authentication cookies
-          const hasAuthCookie = cookieStr.includes("chatglm_refresh_token") ||
-                                 cookieStr.includes("refresh_token") ||
-                                 cookieStr.includes("auth_token") ||
-                                 cookieStr.includes("access_token") ||
-                                 cookieStr.includes("session") ||
-                                 cookieStr.includes("token");
+          const hasAuthCookie =
+            cookieStr.includes("chatglm_refresh_token") ||
+            cookieStr.includes("refresh_token") ||
+            cookieStr.includes("auth_token") ||
+            cookieStr.includes("access_token") ||
+            cookieStr.includes("session") ||
+            cookieStr.includes("token");
 
           // Check if URL changed to indicate logged-in state
-          const isLoggedInUrl = currentUrl.includes("chat") ||
-                                currentUrl.includes("conversation") ||
-                                currentUrl.includes("dashboard") ||
-                                !currentUrl.includes("login") && !currentUrl.includes("auth");
+          const isLoggedInUrl =
+            currentUrl.includes("chat") ||
+            currentUrl.includes("conversation") ||
+            currentUrl.includes("dashboard") ||
+            (!currentUrl.includes("login") && !currentUrl.includes("auth"));
 
           // Check for chat interface elements
-          const hasChatElements = document.querySelector('textarea, [contenteditable="true"], .chat-input, .message-input') !== null;
+          const hasChatElements =
+            document.querySelector(
+              'textarea, [contenteditable="true"], .chat-input, .message-input',
+            ) !== null;
 
           return hasAuthCookie || (isLoggedInUrl && hasChatElements);
         },
-        { timeout: 600000, polling: 1000 } // 10 minutes, check every second
+        { timeout: 600000, polling: 1000 }, // 10 minutes, check every second
       );
 
       onProgress("Login detected via cookies or page state...");
     } catch (error) {
-      onProgress(`Login detection timed out or failed: ${error instanceof Error ? error.message : String(error)}`);
+      onProgress(
+        `Login detection timed out or failed: ${error instanceof Error ? error.message : String(error)}`,
+      );
       onProgress("Checking if we're already on a logged-in page...");
 
       // Fallback: check current page state
       const currentUrl = await page.evaluate(() => window.location.href);
       const cookies = await context.cookies("https://chat.z.ai");
-      const cookieNames = cookies.map(c => c.name).join(', ');
+      const cookieNames = cookies.map((c) => c.name).join(", ");
 
       onProgress(`Current URL: ${currentUrl}`);
       onProgress(`Available cookies: ${cookieNames}`);
@@ -127,7 +134,9 @@ export async function loginGlmIntlWeb(
       if (cookies.length > 0) {
         onProgress("Proceeding with available cookies...");
       } else {
-        throw new Error(`Login timeout. Please ensure you've logged in to chat.z.ai in the browser window. Available cookies: ${cookieNames || 'none'}`);
+        throw new Error(
+          `Login timeout. Please ensure you've logged in to chat.z.ai in the browser window. Available cookies: ${cookieNames || "none"}`,
+        );
       }
     }
 

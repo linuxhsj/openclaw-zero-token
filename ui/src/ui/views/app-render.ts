@@ -9,6 +9,7 @@ import { loadAgentFileContent, loadAgentFiles, saveAgentFile } from "./controlle
 import { loadAgentIdentities, loadAgentIdentity } from "./controllers/agent-identity.ts";
 import { loadAgentSkills } from "./controllers/agent-skills.ts";
 import { loadAgents } from "./controllers/agents.ts";
+import { loadAskOnceModels, executeAskOnceQuery } from "./controllers/askonce.ts";
 import { loadChannels } from "./controllers/channels.ts";
 import { loadChatHistory } from "./controllers/chat.ts";
 import {
@@ -55,6 +56,7 @@ import {
 import { icons } from "./icons.ts";
 import { normalizeBasePath, TAB_GROUPS, subtitleForTab, titleForTab } from "./navigation.ts";
 import { renderAgents } from "./views/agents.ts";
+import { renderAskOnceView } from "./views/askonce.ts";
 import { renderChannels } from "./views/channels.ts";
 import { renderChat } from "./views/chat.ts";
 import { renderConfig } from "./views/config.ts";
@@ -68,8 +70,6 @@ import { renderNodes } from "./views/nodes.ts";
 import { renderOverview } from "./views/overview.ts";
 import { renderSessions } from "./views/sessions.ts";
 import { renderSkills } from "./views/skills.ts";
-import { renderAskOnceView } from "./views/askonce.ts";
-import { loadAskOnceModels, executeAskOnceQuery } from "./controllers/askonce.ts";
 
 const AVATAR_DATA_RE = /^data:/i;
 const AVATAR_HTTP_RE = /^https?:\/\//i;
@@ -959,7 +959,9 @@ export function renderApp(state: AppViewState) {
                   onToggleModel: (modelId) => {
                     const idx = state.askonceSelectedModels.indexOf(modelId);
                     if (idx >= 0) {
-                      state.askonceSelectedModels = state.askonceSelectedModels.filter((m) => m !== modelId);
+                      state.askonceSelectedModels = state.askonceSelectedModels.filter(
+                        (m) => m !== modelId,
+                      );
                     } else {
                       state.askonceSelectedModels = [...state.askonceSelectedModels, modelId];
                     }

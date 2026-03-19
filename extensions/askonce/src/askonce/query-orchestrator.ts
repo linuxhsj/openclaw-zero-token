@@ -3,16 +3,19 @@
  * 负责协调整个查询流程
  */
 
-import { randomUUID } from 'node:crypto';
-import type { QueryOptions, QueryResult, ModelResponse, ProgressCallback } from './types.js';
-import { ConcurrentEngine } from './concurrent-engine.js';
-import { getAdapterRegistry, type ModelAdapter } from './adapters/index.js';
+import { randomUUID } from "node:crypto";
+import { getAdapterRegistry, type ModelAdapter } from "./adapters/index.js";
+import { ConcurrentEngine } from "./concurrent-engine.js";
+import type { QueryOptions, QueryResult, ModelResponse, ProgressCallback } from "./types.js";
 
 /**
  * 根据模型 ID 获取适配器
  * 支持模型 ID（如 "claude"）和适配器 ID（如 "claude-web"）
  */
-function getAdapterByModelId(registry: ReturnType<typeof getAdapterRegistry>, modelId: string): ModelAdapter | undefined {
+function getAdapterByModelId(
+  registry: ReturnType<typeof getAdapterRegistry>,
+  modelId: string,
+): ModelAdapter | undefined {
   // 先尝试直接通过适配器 ID 查找
   const adapter = registry.getAdapterById(modelId);
   if (adapter) {
@@ -68,10 +71,12 @@ export class QueryOrchestrator {
     }
 
     if (adapters.length === 0) {
-      throw new Error('没有可用的模型适配器，请先配置认证');
+      throw new Error("没有可用的模型适配器，请先配置认证");
     }
 
-    console.log(`[QueryOrchestrator] 使用 ${adapters.length} 个模型: ${adapters.map((a) => a.name).join(', ')}`);
+    console.log(
+      `[QueryOrchestrator] 使用 ${adapters.length} 个模型: ${adapters.map((a) => a.name).join(", ")}`,
+    );
 
     // 执行并发查询
     const responses = await this.engine.executeAll(
@@ -81,7 +86,7 @@ export class QueryOrchestrator {
         timeout: options.timeout,
         systemPrompt: options.systemPrompt,
       },
-      onProgress
+      onProgress,
     );
 
     const endTime = Date.now();
@@ -94,12 +99,12 @@ export class QueryOrchestrator {
       endTime,
       totalTime: endTime - startTime,
       responses,
-      successCount: responses.filter((r) => r.status === 'completed').length,
-      errorCount: responses.filter((r) => r.status !== 'completed').length,
+      successCount: responses.filter((r) => r.status === "completed").length,
+      errorCount: responses.filter((r) => r.status !== "completed").length,
     };
 
     console.log(
-      `[QueryOrchestrator] 查询完成: 成功 ${result.successCount}, 失败 ${result.errorCount}, 耗时 ${result.totalTime}ms`
+      `[QueryOrchestrator] 查询完成: 成功 ${result.successCount}, 失败 ${result.errorCount}, 耗时 ${result.totalTime}ms`,
     );
 
     return result;
@@ -108,7 +113,9 @@ export class QueryOrchestrator {
   /**
    * 获取所有可用的模型列表
    */
-  async listAvailableModels(): Promise<Array<{ id: string; name: string; provider: string; available: boolean }>> {
+  async listAvailableModels(): Promise<
+    Array<{ id: string; name: string; provider: string; available: boolean }>
+  > {
     const adapters = this.registry.getAllAdapters();
     const results: Array<{ id: string; name: string; provider: string; available: boolean }> = [];
 
@@ -117,7 +124,7 @@ export class QueryOrchestrator {
       for (const modelId of adapter.models) {
         results.push({
           id: modelId,
-          name: adapter.name,  // 直接使用适配器名称，如 "Claude"、"ChatGPT" 等
+          name: adapter.name, // 直接使用适配器名称，如 "Claude"、"ChatGPT" 等
           provider: adapter.provider,
           available: isAvailable,
         });
@@ -138,7 +145,7 @@ export class QueryOrchestrator {
       for (const modelId of adapter.models) {
         results.push({
           id: modelId,
-          name: adapter.name,  // 直接使用适配器名称
+          name: adapter.name, // 直接使用适配器名称
           provider: adapter.provider,
         });
       }

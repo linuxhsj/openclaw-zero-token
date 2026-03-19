@@ -3,13 +3,13 @@
  * 插件版本
  */
 
-import chalk from "chalk";
-import path from "node:path";
 import fs from "node:fs";
+import path from "node:path";
+import chalk from "chalk";
 import type { Command } from "commander";
 import type { OpenClawPluginCliContext } from "openclaw/plugin-sdk/askonce";
-import { QueryOrchestrator } from "../askonce/query-orchestrator.js";
 import { ConsoleFormatter, MarkdownFormatter, JsonFormatter } from "../askonce/formatters/index.js";
+import { QueryOrchestrator } from "../askonce/query-orchestrator.js";
 
 /**
  * 自动检测并设置 OPENCLAW_STATE_DIR
@@ -46,7 +46,7 @@ function setupOpenclawStateDir(): void {
 export async function registerAskOnceCli(
   program: Command,
   options: any,
-  question?: string[]
+  question?: string[],
 ): Promise<void> {
   // Setup state directory before any auth checks
   setupOpenclawStateDir();
@@ -69,9 +69,9 @@ export async function registerAskOnceCli(
     console.error("错误: 请提供问题参数");
     console.error("");
     console.error("用法:");
-    console.error("  openclaw askonce \"你的问题\"              # 提问");
+    console.error('  openclaw askonce "你的问题"              # 提问');
     console.error("  openclaw askonce --list                 # 列出可用模型");
-    console.error("  openclaw askonce \"问题\" -m claude-web   # 指定模型");
+    console.error('  openclaw askonce "问题" -m claude-web   # 指定模型');
     console.error("");
     console.error("提示: 配置认证请使用 openclaw onboard <provider>");
     process.exit(1);
@@ -114,7 +114,7 @@ export async function registerAskOnceCli(
         timeout: parseInt(options.timeout),
         stream: options.stream,
       },
-      onProgress
+      onProgress,
     );
 
     // 格式化输出

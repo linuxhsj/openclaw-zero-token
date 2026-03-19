@@ -47,12 +47,12 @@ export async function applyAuthChoiceClaudeWeb(
       sessionKey = result.sessionKey;
       userAgent = result.userAgent;
       organizationId = result.organizationId;
-      
+
       await setClaudeWebCookie(
-        { 
-          sessionKey, 
-          userAgent, 
-          organizationId 
+        {
+          sessionKey,
+          userAgent,
+          organizationId,
         },
         agentDir,
       );
@@ -103,7 +103,7 @@ export async function applyAuthChoiceClaudeWeb(
     });
 
     const trimmed = cookieInput.trim();
-    
+
     // Determine if it's a full cookie string or just sessionKey
     let fullCookie: string;
     if (trimmed.startsWith("sk-ant-sid")) {
@@ -121,7 +121,8 @@ export async function applyAuthChoiceClaudeWeb(
       }
     }
 
-    userAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
+    userAgent =
+      "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 
     await setClaudeWebCookie({ sessionKey, cookie: fullCookie, userAgent }, agentDir);
   }

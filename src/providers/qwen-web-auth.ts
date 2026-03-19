@@ -34,7 +34,7 @@ export async function loginQwenWeb(params: {
     if (!wsUrl) {
       throw new Error(
         `Failed to connect to Chrome at ${profile.cdpUrl}. ` +
-          "Make sure Chrome is running in debug mode (./start-chrome-debug.sh)"
+          "Make sure Chrome is running in debug mode (./start-chrome-debug.sh)",
       );
     }
     running = { cdpPort: profile.cdpPort };
@@ -45,7 +45,9 @@ export async function loginQwenWeb(params: {
   }
 
   try {
-    const cdpUrl = browserConfig.attachOnly ? profile.cdpUrl : `http://127.0.0.1:${running.cdpPort}`;
+    const cdpUrl = browserConfig.attachOnly
+      ? profile.cdpUrl
+      : `http://127.0.0.1:${running.cdpPort}`;
     let wsUrl: string | null = null;
 
     params.onProgress("Waiting for browser debugger...");
@@ -90,10 +92,7 @@ export async function loginQwenWeb(params: {
         }
 
         try {
-          const cookies = await context.cookies([
-            "https://chat.qwen.ai",
-            "https://qwen.ai",
-          ]);
+          const cookies = await context.cookies(["https://chat.qwen.ai", "https://qwen.ai"]);
           if (cookies.length === 0) {
             console.log(`[Qwen] No cookies found in context yet.`);
             return;
@@ -104,12 +103,13 @@ export async function loginQwenWeb(params: {
 
           // Look for session-related cookies
           const sessionCookie = cookies.find(
-            (c) => c.name.includes("session") || c.name.includes("token") || c.name.includes("auth")
+            (c) =>
+              c.name.includes("session") || c.name.includes("token") || c.name.includes("auth"),
           );
 
           if (sessionCookie || capturedToken) {
             const finalToken = capturedToken || sessionCookie?.value || "";
-            
+
             if (finalToken && cookies.length > 2) {
               resolved = true;
               clearTimeout(timeout);
@@ -139,7 +139,7 @@ export async function loginQwenWeb(params: {
           const headers = request.headers();
           const auth = headers["authorization"];
           const cookie = headers["cookie"];
-          
+
           if (auth) {
             if (!capturedToken) {
               console.log(`[Qwen] Captured authorization token from request.`);

@@ -159,7 +159,9 @@ export function createChatGPTWebStreamFn(cookieOrJson: string): StreamFn {
 
         console.log(`[ChatGPTWebStream] Starting run for session: ${sessionKey}`);
         console.log(`[ChatGPTWebStream] Conversation ID: ${conversationId || "new"}`);
-        console.log(`[ChatGPTWebStream] Tools: ${tools.length}, prompt length: ${cleanPrompt.length}`);
+        console.log(
+          `[ChatGPTWebStream] Tools: ${tools.length}, prompt length: ${cleanPrompt.length}`,
+        );
 
         const responseStream = await client.chatCompletions({
           conversationId: conversationId || "new",
@@ -179,7 +181,12 @@ export function createChatGPTWebStreamFn(cookieOrJson: string): StreamFn {
         let buffer = "";
 
         const contentParts: (TextContent | ToolCall)[] = [];
-        const accumulatedToolCalls: { id: string; name: string; arguments: string; index: number }[] = [];
+        const accumulatedToolCalls: {
+          id: string;
+          name: string;
+          arguments: string;
+          index: number;
+        }[] = [];
         const indexMap = new Map<string, number>();
         let nextIndex = 0;
         let currentMode: "text" | "toolcall" = "text";
@@ -404,7 +411,7 @@ export function createChatGPTWebStreamFn(cookieOrJson: string): StreamFn {
                     : undefined;
               sseSamples.push({
                 role: role ?? undefined,
-                hasParts: !!(data.message?.content?.parts?.length),
+                hasParts: !!data.message?.content?.parts?.length,
                 contentPreview: preview,
               });
             }
@@ -457,17 +464,20 @@ export function createChatGPTWebStreamFn(cookieOrJson: string): StreamFn {
         }
 
         const stopReason = accumulatedToolCalls.length > 0 ? "toolUse" : "stop";
-        console.log(`[ChatGPTWebStream] Stream completed. Content length: ${accumulatedContent.length}, tools: ${accumulatedToolCalls.length}`);
+        console.log(
+          `[ChatGPTWebStream] Stream completed. Content length: ${accumulatedContent.length}, tools: ${accumulatedToolCalls.length}`,
+        );
         if (sseSamples.length > 0) {
           console.log(
             `[ChatGPTWebStream] SSE samples:`,
-            JSON.stringify(sseSamples, null, 2).slice(0, 800)
+            JSON.stringify(sseSamples, null, 2).slice(0, 800),
           );
         }
 
         const assistantMessage: AssistantMessage = {
           role: "assistant",
-          content: contentParts.length > 0 ? contentParts : [{ type: "text", text: accumulatedContent }],
+          content:
+            contentParts.length > 0 ? contentParts : [{ type: "text", text: accumulatedContent }],
           stopReason,
           api: model.api,
           provider: model.provider,

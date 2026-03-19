@@ -1,7 +1,6 @@
 import crypto from "node:crypto";
 import { chromium } from "playwright-core";
 import type { BrowserContext, Page } from "playwright-core";
-import type { ModelDefinitionConfig } from "../config/types.models.js";
 import { getHeadersWithAuth } from "../browser/cdp.helpers.js";
 import {
   launchOpenClawChrome,
@@ -11,6 +10,7 @@ import {
 } from "../browser/chrome.js";
 import { resolveBrowserConfig, resolveProfile } from "../browser/config.js";
 import { loadConfig } from "../config/io.js";
+import type { ModelDefinitionConfig } from "../config/types.models.js";
 
 export interface QwenCNWebClientOptions {
   cookie: string;
@@ -90,16 +90,18 @@ export class QwenCNWebClientBrowser {
       if (!wsUrl) {
         throw new Error(
           `Failed to connect to Chrome at ${profile.cdpUrl}. ` +
-          `Make sure Chrome is running in debug mode`
+            `Make sure Chrome is running in debug mode`,
         );
       }
 
-      this.browser = await chromium.connectOverCDP(wsUrl, {
-        headers: getHeadersWithAuth(wsUrl),
-      }).then((b) => b.contexts()[0]);
+      this.browser = await chromium
+        .connectOverCDP(wsUrl, {
+          headers: getHeadersWithAuth(wsUrl),
+        })
+        .then((b) => b.contexts()[0]);
 
       const pages = this.browser.pages();
-      let qwenPage = pages.find(p => p.url().includes('qianwen.com'));
+      let qwenPage = pages.find((p) => p.url().includes("qianwen.com"));
 
       if (qwenPage) {
         console.log(`[Qwen CN Web Browser] Found existing Qwen CN page`);
@@ -107,7 +109,7 @@ export class QwenCNWebClientBrowser {
       } else {
         console.log(`[Qwen CN Web Browser] Creating new page`);
         this.page = await this.browser.newPage();
-        await this.page.goto('https://www.qianwen.com/', { waitUntil: 'domcontentloaded' });
+        await this.page.goto("https://www.qianwen.com/", { waitUntil: "domcontentloaded" });
       }
 
       console.log(`[Qwen CN Web Browser] Connected successfully`);
@@ -129,9 +131,11 @@ export class QwenCNWebClientBrowser {
         throw new Error(`Failed to resolve Chrome WebSocket URL from ${cdpUrl}`);
       }
 
-      this.browser = await chromium.connectOverCDP(wsUrl, {
-        headers: getHeadersWithAuth(wsUrl),
-      }).then((b) => b.contexts()[0]);
+      this.browser = await chromium
+        .connectOverCDP(wsUrl, {
+          headers: getHeadersWithAuth(wsUrl),
+        })
+        .then((b) => b.contexts()[0]);
 
       this.page = this.browser.pages()[0] || (await this.browser.newPage());
     }
@@ -155,7 +159,7 @@ export class QwenCNWebClientBrowser {
         await this.browser.addCookies(cookies);
       } catch (err) {
         console.warn(
-          `[Qwen CN Web Browser] addCookies failed (page may already have session): ${err instanceof Error ? err.message : String(err)}`
+          `[Qwen CN Web Browser] addCookies failed (page may already have session): ${err instanceof Error ? err.message : String(err)}`,
         );
       }
     }
@@ -177,9 +181,9 @@ export class QwenCNWebClientBrowser {
     const { page } = await this.ensureBrowser();
 
     const model = params.model || "Qwen3.5-Plus";
-    const sessionId = params.sessionId || Array.from({ length: 32 }, () =>
-      Math.floor(Math.random() * 16).toString(16),
-    ).join("");
+    const sessionId =
+      params.sessionId ||
+      Array.from({ length: 32 }, () => Math.floor(Math.random() * 16).toString(16)).join("");
 
     console.log(`[Qwen CN Web Browser] Sending message`);
     console.log(`[Qwen CN Web Browser] Model: ${model}`);
@@ -189,7 +193,18 @@ export class QwenCNWebClientBrowser {
     const nonce = Math.random().toString(36).slice(2);
 
     const responseData = await page.evaluate(
-      async ({ baseUrl, sessionId, model, message, parentMessageId, ut, xsrfToken, deviceId, nonce, timestamp }) => {
+      async ({
+        baseUrl,
+        sessionId,
+        model,
+        message,
+        parentMessageId,
+        ut,
+        xsrfToken,
+        deviceId,
+        nonce,
+        timestamp,
+      }) => {
         try {
           const url = `${baseUrl}/api/v2/chat?biz_id=ai_qwen&chat_client=h5&device=pc&fr=pc&pr=qwen&nonce=${nonce}&timestamp=${timestamp}&ut=${ut}`;
 
@@ -223,7 +238,7 @@ export class QwenCNWebClientBrowser {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              "Accept": "text/event-stream, text/plain, */*",
+              Accept: "text/event-stream, text/plain, */*",
               "x-xsrf-token": xsrfToken,
               "x-deviceid": deviceId,
               "x-platform": "pc_tongyi",
@@ -269,12 +284,18 @@ export class QwenCNWebClientBrowser {
         timestamp,
       },
     );
-    console.log(`[Qwen CN Web Browser] Response data: ok=${responseData?.ok}, status=${responseData?.status}, data length=${responseData?.data?.length}`);
+    console.log(
+      `[Qwen CN Web Browser] Response data: ok=${responseData?.ok}, status=${responseData?.status}, data length=${responseData?.data?.length}`,
+    );
     if (responseData?.data && responseData.data.length > 0) {
-      console.log(`[Qwen CN Web Browser] Response preview: ${responseData.data.substring(0, 200)}...`);
+      console.log(
+        `[Qwen CN Web Browser] Response preview: ${responseData.data.substring(0, 200)}...`,
+      );
     }
     if (!responseData || !responseData.ok) {
-      throw new Error(`Qwen CN API error: ${responseData?.status || "unknown"} - ${responseData?.error || "Request failed"}`);
+      throw new Error(
+        `Qwen CN API error: ${responseData?.status || "unknown"} - ${responseData?.error || "Request failed"}`,
+      );
     }
 
     const encoder = new TextEncoder();

@@ -1,4 +1,5 @@
 import { resolveEnvApiKey } from "../agents/model-auth.js";
+import { MANUS_API_DEFAULT_MODEL_REF } from "../agents/models-config.providers.js";
 import {
   formatApiKeyPreview,
   normalizeApiKeyInput,
@@ -7,13 +8,12 @@ import {
 import { createAuthChoiceAgentModelNoter } from "./auth-choice.apply-helpers.js";
 import type { ApplyAuthChoiceParams, ApplyAuthChoiceResult } from "./auth-choice.apply.js";
 import { applyDefaultModelChoice } from "./auth-choice.default-model.js";
-import { MANUS_API_DEFAULT_MODEL_REF } from "../agents/models-config.providers.js";
+import { setManusApiKey } from "./onboard-auth.credentials.js";
 import {
   applyAuthProfileConfig,
   applyManusApiConfig,
   applyManusApiProviderConfig,
 } from "./onboard-auth.js";
-import { setManusApiKey } from "./onboard-auth.credentials.js";
 
 export async function applyAuthChoiceManusApi(
   params: ApplyAuthChoiceParams,

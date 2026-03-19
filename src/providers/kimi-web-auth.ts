@@ -1,10 +1,10 @@
 import { chromium } from "playwright-core";
+import { getHeadersWithAuth } from "../browser/cdp.helpers.js";
 import {
   launchOpenClawChrome,
   stopOpenClawChrome,
   getChromeWebSocketUrl,
 } from "../browser/chrome.js";
-import { getHeadersWithAuth } from "../browser/cdp.helpers.js";
 import { resolveBrowserConfig, resolveProfile } from "../browser/config.js";
 import { loadConfig } from "../config/io.js";
 
@@ -23,9 +23,7 @@ export interface KimiWebAuthOptions {
  * Kimi 自动登录：与 Claude/Doubao 一致，使用 OpenClaw 的系统 Chrome，
  * 不依赖 Playwright 下载的 bundled Chromium（无需 npx playwright install）
  */
-export async function loginKimiWeb(
-  options: KimiWebAuthOptions = {},
-): Promise<KimiWebAuthResult> {
+export async function loginKimiWeb(options: KimiWebAuthOptions = {}): Promise<KimiWebAuthResult> {
   const { onProgress = console.log } = options;
 
   const rootConfig = loadConfig();
@@ -44,7 +42,7 @@ export async function loginKimiWeb(
     if (!wsUrl) {
       throw new Error(
         `Failed to connect to Chrome at ${profile.cdpUrl}. ` +
-          "Make sure Chrome is running in debug mode (./start-chrome-debug.sh)"
+          "Make sure Chrome is running in debug mode (./start-chrome-debug.sh)",
       );
     }
     running = { cdpPort: profile.cdpPort };
@@ -55,7 +53,9 @@ export async function loginKimiWeb(
   }
 
   try {
-    const cdpUrl = browserConfig.attachOnly ? profile.cdpUrl : `http://127.0.0.1:${running.cdpPort}`;
+    const cdpUrl = browserConfig.attachOnly
+      ? profile.cdpUrl
+      : `http://127.0.0.1:${running.cdpPort}`;
     let wsUrl: string | null = null;
 
     onProgress("Waiting for browser debugger...");

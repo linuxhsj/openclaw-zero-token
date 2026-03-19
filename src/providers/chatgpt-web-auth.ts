@@ -34,7 +34,7 @@ export async function loginChatGPTWeb(params: {
     if (!wsUrl) {
       throw new Error(
         `Failed to connect to Chrome at ${profile.cdpUrl}. ` +
-          "Make sure Chrome is running in debug mode (./start-chrome-debug.sh)"
+          "Make sure Chrome is running in debug mode (./start-chrome-debug.sh)",
       );
     }
     running = { cdpPort: profile.cdpPort };
@@ -45,7 +45,9 @@ export async function loginChatGPTWeb(params: {
   }
 
   try {
-    const cdpUrl = browserConfig.attachOnly ? profile.cdpUrl : `http://127.0.0.1:${running.cdpPort}`;
+    const cdpUrl = browserConfig.attachOnly
+      ? profile.cdpUrl
+      : `http://127.0.0.1:${running.cdpPort}`;
     let wsUrl: string | null = null;
 
     params.onProgress("Waiting for browser debugger...");
@@ -89,10 +91,7 @@ export async function loginChatGPTWeb(params: {
         }
 
         try {
-          const cookies = await context.cookies([
-            "https://chatgpt.com",
-            "https://chat.openai.com",
-          ]);
+          const cookies = await context.cookies(["https://chatgpt.com", "https://chat.openai.com"]);
           if (cookies.length === 0) {
             console.log(`[ChatGPT] No cookies found in context yet.`);
             return;
@@ -102,9 +101,7 @@ export async function loginChatGPTWeb(params: {
           console.log(`[ChatGPT] Found cookies: ${cookieNames.join(", ")}`);
 
           // Look for session token (may be split into .0 and .1 parts)
-          const sessionCookie = cookies.find(
-            (c) => c.name === "__Secure-next-auth.session-token"
-          );
+          const sessionCookie = cookies.find((c) => c.name === "__Secure-next-auth.session-token");
 
           // Handle split session tokens (.0 and .1)
           let splitToken = "";
@@ -119,7 +116,7 @@ export async function loginChatGPTWeb(params: {
 
           if (sessionCookie || capturedAccessToken || splitToken) {
             const finalToken = capturedAccessToken || sessionCookie?.value || splitToken || "";
-            
+
             if (finalToken) {
               resolved = true;
               clearTimeout(timeout);
@@ -148,7 +145,7 @@ export async function loginChatGPTWeb(params: {
         if (url.includes("chatgpt.com") || url.includes("openai.com")) {
           const headers = request.headers();
           const cookie = headers["cookie"];
-          
+
           if (cookie) {
             const tokenMatch = cookie.match(/__Secure-next-auth\.session-token=([^;]+)/);
             if (tokenMatch) {

@@ -45,7 +45,9 @@ export async function loginQwenCNWeb(params: {
       await new Promise((r) => setTimeout(r, 1000));
 
       const cookies = await context.cookies();
-      const sessionCookie = cookies.find((c) => c.name === "tongyi_sso_ticket" || c.name === "login_aliyunid_ticket");
+      const sessionCookie = cookies.find(
+        (c) => c.name === "tongyi_sso_ticket" || c.name === "login_aliyunid_ticket",
+      );
 
       if (sessionCookie) {
         cookie = cookies.map((c) => `${c.name}=${c.value}`).join("; ");

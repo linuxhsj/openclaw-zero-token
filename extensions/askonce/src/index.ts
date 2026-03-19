@@ -5,14 +5,14 @@
  * Query multiple AI models simultaneously with a single question
  */
 
+import fs from "node:fs";
+import path from "node:path";
+import chalk from "chalk";
 import type { Command } from "commander";
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk/askonce";
 import { emptyPluginConfigSchema } from "openclaw/plugin-sdk/askonce";
-import chalk from "chalk";
-import fs from "node:fs";
-import path from "node:path";
-import { QueryOrchestrator } from "../askonce/query-orchestrator.js";
 import { ConsoleFormatter, MarkdownFormatter, JsonFormatter } from "../askonce/formatters/index.js";
+import { QueryOrchestrator } from "../askonce/query-orchestrator.js";
 
 /**
  * 自动检测并设置 OPENCLAW_STATE_DIR
@@ -67,11 +67,7 @@ const askoncePlugin = {
   },
 };
 
-async function runAskOnce(
-  _program: Command,
-  options: any,
-  question?: string[]
-): Promise<void> {
+async function runAskOnce(_program: Command, options: any, question?: string[]): Promise<void> {
   setupOpenclawStateDir();
 
   const orchestrator = new QueryOrchestrator();
@@ -132,7 +128,7 @@ async function runAskOnce(
         timeout: parseInt(options.timeout),
         stream: options.stream,
       },
-      onProgress
+      onProgress,
     );
 
     const output = formatter.format(result);

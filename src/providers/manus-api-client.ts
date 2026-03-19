@@ -42,7 +42,7 @@ export class ManusApiClient {
 
   private async request<T>(
     path: string,
-    options: { method?: string; body?: unknown } = {}
+    options: { method?: string; body?: unknown } = {},
   ): Promise<T> {
     const res = await fetch(`${MANUS_API_BASE}${path}`, {
       method: options.method || "GET",

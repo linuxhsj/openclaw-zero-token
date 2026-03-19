@@ -32,7 +32,31 @@ INPUT_PATHS=(
 )
 
 compute_hash() {
-  ROOT_DIR="$ROOT_DIR" node --input-type=module - "${INPUT_PATHS[@]}" <<'NODE'
+  local node_cmd=""
+  if command -v node >/dev/null 2>&1; then
+    node_cmd="node"
+  elif command -v nodejs >/dev/null 2>&1; then
+    node_cmd="nodejs"
+  elif [ -x "/c/Program Files/nodejs/node.exe" ]; then
+    node_cmd="/c/Program Files/nodejs/node.exe"
+  elif [ -x "/c/Program Files/nodejs/node" ]; then
+    node_cmd="/c/Program Files/nodejs/node"
+  elif [ -x "/usr/bin/node" ]; then
+    node_cmd="/usr/bin/node"
+  else
+    # Try to find node via Windows PATH (useful if running in WSL or MinGW)
+    if command -v cmd.exe >/dev/null 2>&1; then
+      node_path=$(cmd.exe //c where node 2>/dev/null | head -n 1 | tr -d '\r')
+      if [ -n "$node_path" ] && [ -x "$node_path" ]; then
+        node_cmd="$node_path"
+      fi
+    fi
+    if [ -z "$node_cmd" ]; then
+      echo "Error: node not found in PATH or common locations" >&2
+      exit 1
+    fi
+  fi
+  ROOT_DIR="$ROOT_DIR" "$node_cmd" --input-type=module - "${INPUT_PATHS[@]}" <<'NODE'
 import { createHash } from "node:crypto";
 import { promises as fs } from "node:fs";
 import path from "node:path";

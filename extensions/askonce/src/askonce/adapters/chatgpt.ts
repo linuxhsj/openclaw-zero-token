@@ -2,22 +2,19 @@
  * ChatGPT Web 适配器
  */
 
-import { BaseAdapter } from './base.js';
-import type { ModelResponse, AdapterQueryOptions } from '../types.js';
-import { createChatGPTWebStreamFn } from '../../agents/chatgpt-web-stream.js';
-import {
-  ensureAuthProfileStore,
-  listProfilesForProvider,
-} from '../../agents/auth-profiles.js';
+import { ensureAuthProfileStore, listProfilesForProvider } from "../../agents/auth-profiles.js";
+import { createChatGPTWebStreamFn } from "../../agents/chatgpt-web-stream.js";
+import type { ModelResponse, AdapterQueryOptions } from "../types.js";
+import { BaseAdapter } from "./base.js";
 
 export class ChatGPTAdapter extends BaseAdapter {
-  readonly id = 'chatgpt-web';
-  readonly name = 'ChatGPT';
-  readonly provider = 'openai';
-  readonly models = ['chatgpt'];
-  readonly defaultModel = 'chatgpt';
+  readonly id = "chatgpt-web";
+  readonly name = "ChatGPT";
+  readonly provider = "openai";
+  readonly models = ["chatgpt"];
+  readonly defaultModel = "chatgpt";
   // ChatGPT Web 实际使用的模型 ID
-  private readonly actualModelId = 'gpt-4';
+  private readonly actualModelId = "gpt-4";
 
   private cachedCredential: string | null = null;
 
@@ -33,7 +30,7 @@ export class ChatGPTAdapter extends BaseAdapter {
 
     try {
       const store = ensureAuthProfileStore();
-      const profiles = listProfilesForProvider(store, 'chatgpt-web');
+      const profiles = listProfilesForProvider(store, "chatgpt-web");
 
       if (profiles.length === 0) {
         return null;
@@ -46,11 +43,11 @@ export class ChatGPTAdapter extends BaseAdapter {
         return null;
       }
 
-      if (credential.type === 'api_key' && credential.key) {
+      if (credential.type === "api_key" && credential.key) {
         this.cachedCredential = credential.key;
-      } else if (credential.type === 'oauth') {
+      } else if (credential.type === "oauth") {
         this.cachedCredential = JSON.stringify(credential);
-      } else if (credential.type === 'token' && credential.token) {
+      } else if (credential.type === "token" && credential.token) {
         this.cachedCredential = credential.token;
       }
 
@@ -69,10 +66,10 @@ export class ChatGPTAdapter extends BaseAdapter {
       if (!credential) {
         return this.createResponse(
           modelId,
-          'error',
-          '',
-          'ChatGPT Web 未认证，请先运行 openclaw onboard chatgpt-web',
-          startTime
+          "error",
+          "",
+          "ChatGPT Web 未认证，请先运行 openclaw onboard chatgpt-web",
+          startTime,
         );
       }
 
@@ -80,50 +77,50 @@ export class ChatGPTAdapter extends BaseAdapter {
 
       const model = {
         id: this.actualModelId,
-        api: 'chatgpt-web',
-        provider: 'openai',
+        api: "chatgpt-web",
+        provider: "openai",
       };
 
       // Use unique session ID for each query to start a new conversation
       const sessionId = `askonce-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
       const context = {
-        messages: [{ role: 'user', content: question }],
-        systemPrompt: options?.systemPrompt || '',
+        messages: [{ role: "user", content: question }],
+        systemPrompt: options?.systemPrompt || "",
         tools: [],
         sessionId, // Pass unique session to force new conversation
       };
 
       const stream = streamFn(model as any, context as any, { signal: options?.signal });
 
-      let content = '';
+      let content = "";
       try {
         for await (const event of stream) {
-          if (event.type === 'text_delta' && event.delta) {
+          if (event.type === "text_delta" && event.delta) {
             content += event.delta;
-          } else if (event.type === 'error') {
+          } else if (event.type === "error") {
             return this.createResponse(
               modelId,
-              'error',
+              "error",
               content,
-              event.error?.errorMessage || 'Stream error',
-              startTime
+              event.error?.errorMessage || "Stream error",
+              startTime,
             );
           }
         }
       } catch (error) {
         return this.createResponse(
           modelId,
-          'error',
+          "error",
           content,
           error instanceof Error ? error.message : String(error),
-          startTime
+          startTime,
         );
       }
 
-      return this.createResponse(modelId, 'completed', content, undefined, startTime);
+      return this.createResponse(modelId, "completed", content, undefined, startTime);
     } catch (error) {
-      return this.createResponse(modelId, 'error', '', this.parseError(error), startTime);
+      return this.createResponse(modelId, "error", "", this.parseError(error), startTime);
     }
   }
 }

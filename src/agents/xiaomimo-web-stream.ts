@@ -13,6 +13,7 @@ import {
 } from "../providers/xiaomimo-web-client-browser.js";
 
 const sessionMap = new Map<string, string>();
+const clientMap = new Map<string, XiaomiMimoWebClientBrowser>();
 
 export function createXiaomiMimoWebStreamFn(cookieOrJson: string): StreamFn {
   let options: XiaomiMimoWebClientOptions;
@@ -29,11 +30,17 @@ export function createXiaomiMimoWebStreamFn(cookieOrJson: string): StreamFn {
 
     const run = async () => {
       try {
+        console.log('[XiaomiMimoWebStream] context keys:', Object.keys(context).join(', '));
         const messages = context.messages;
         const systemPrompt = context.systemPrompt || "";
         const tools = context.tools || [];
-        const sessionKey = model.id;
+        const sessionKey = model.id + ((context as any).sessionId ? `:${(context as any).sessionId}` : '');
         const sessionId = sessionMap.get(sessionKey);
+        let client = clientMap.get(sessionKey);
+        if (!client) {
+          client = new XiaomiMimoWebClientBrowser(options);
+          clientMap.set(sessionKey, client);
+        }
 
         let toolPrompt = "";
         if (tools.length > 0) {
@@ -127,13 +134,34 @@ export function createXiaomiMimoWebStreamFn(cookieOrJson: string): StreamFn {
         }
 
         // MiMo Web API 限制非常严格
-        const MAX_PROMPT_LENGTH = 3000;
+        const MAX_PROMPT_LENGTH = 12000;
         if (prompt.length > MAX_PROMPT_LENGTH) {
           console.log(`[XiaomiMimoWebStream] Truncating from ${prompt.length} to ${MAX_PROMPT_LENGTH}`);
-          // 只保留最后一个 User 消息
-          const userParts = prompt.split("User:");
-          const lastUser = userParts[userParts.length - 1];
-          prompt = "你是一个AI助手。\n\nUser:" + (lastUser || "").slice(-MAX_PROMPT_LENGTH + 50);
+          // 智能截断：保留最近的历史记录
+          if (sessionId) {
+            // 如果有会话ID，只保留最后一条用户消息
+            const userParts = prompt.split("User:");
+            const lastUser = userParts[userParts.length - 1];
+            prompt = "你是一个AI助手。\n\nUser:" + (lastUser || "").slice(-MAX_PROMPT_LENGTH + 50);
+          } else {
+            // 如果没有会话ID，从完整历史记录中保留最近的部分
+            // 按消息分割，从最新的开始累计字符
+            const messages = prompt.split(/\n\n(?=User:|Assistant:)/);
+            let accumulated = "";
+            for (let i = messages.length - 1; i >= 0; i--) {
+              const candidate = messages[i] + (accumulated ? "\n\n" + accumulated : "");
+              if (candidate.length > MAX_PROMPT_LENGTH) {
+                break;
+              }
+              accumulated = candidate;
+            }
+            if (!accumulated) {
+              // 如果单条消息就超限，截断最后一条消息
+              const lastMessage = messages[messages.length - 1];
+              accumulated = lastMessage.slice(-MAX_PROMPT_LENGTH);
+            }
+            prompt = accumulated;
+          }
         }
 
         console.log(`[XiaomiMimoWebStream] Starting run for session: ${sessionKey}`);
@@ -267,6 +295,8 @@ export function createXiaomiMimoWebStreamFn(cookieOrJson: string): StreamFn {
             });
           }
         };
+
+        let currentEvent: string | null = null;
 
         const pushDelta = (delta: string, forceType?: "text" | "thinking") => {
           if (!delta) {
@@ -403,6 +433,8 @@ export function createXiaomiMimoWebStreamFn(cookieOrJson: string): StreamFn {
             const event = line.slice(6).trim();
             if (event === "error") {
               currentMode = "error" as any;
+            } else if (event === "dialogId") {
+              currentEvent = "dialogId";
             }
             return;
           }
@@ -421,6 +453,11 @@ export function createXiaomiMimoWebStreamFn(cookieOrJson: string): StreamFn {
 
             if (data.sessionId) {
               sessionMap.set(sessionKey, data.sessionId);
+              currentEvent = null;
+            } else if (currentEvent === "dialogId" && data.content) {
+              sessionMap.set(sessionKey, String(data.content));
+              currentEvent = null;
+              return;
             }
 
             // MiMo 格式: {"type":"text","content":"..."}

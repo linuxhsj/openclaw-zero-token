@@ -3,8 +3,19 @@
  * 负责并发调度所有模型适配器的查询请求
  */
 
-import type { ModelAdapter, ModelResponse, AdapterQueryOptions, ProgressCallback } from './types.js';
-import { DEFAULT_TIMEOUT, MAX_RETRIES, CONCURRENCY_LIMIT, RETRY_BASE_DELAY, MAX_RETRY_DELAY } from './constants.js';
+import {
+  DEFAULT_TIMEOUT,
+  MAX_RETRIES,
+  CONCURRENCY_LIMIT,
+  RETRY_BASE_DELAY,
+  MAX_RETRY_DELAY,
+} from "./constants.js";
+import type {
+  ModelAdapter,
+  ModelResponse,
+  AdapterQueryOptions,
+  ProgressCallback,
+} from "./types.js";
 
 /**
  * 并发执行引擎配置
@@ -47,13 +58,13 @@ export class ConcurrentEngine {
     adapters: ModelAdapter[],
     question: string,
     options: AdapterQueryOptions = {},
-    onProgress?: ProgressCallback
+    onProgress?: ProgressCallback,
   ): Promise<ModelResponse[]> {
     // 过滤出可用的适配器
     const availableAdapters = await this.filterAvailableAdapters(adapters);
 
     if (availableAdapters.length === 0) {
-      console.warn('[ConcurrentEngine] 没有可用的模型适配器');
+      console.warn("[ConcurrentEngine] 没有可用的模型适配器");
       return [];
     }
 
@@ -61,7 +72,7 @@ export class ConcurrentEngine {
 
     // 创建并发任务
     const tasks = availableAdapters.map((adapter) =>
-      this.executeWithRetry(adapter, question, options, onProgress)
+      this.executeWithRetry(adapter, question, options, onProgress),
     );
 
     // 使用 Promise.allSettled 并发执行，确保单个失败不影响其他
@@ -69,7 +80,7 @@ export class ConcurrentEngine {
 
     // 聚合结果
     return results.map((result, index) => {
-      if (result.status === 'fulfilled') {
+      if (result.status === "fulfilled") {
         return result.value;
       } else {
         // 创建错误响应
@@ -78,9 +89,9 @@ export class ConcurrentEngine {
           modelId: adapter.defaultModel,
           modelName: adapter.name,
           provider: adapter.provider,
-          status: 'error' as const,
-          content: '',
-          error: result.reason?.message || 'Unknown error',
+          status: "error" as const,
+          content: "",
+          error: result.reason?.message || "Unknown error",
           responseTime: 0,
           charCount: 0,
           timestamp: Date.now(),
@@ -97,12 +108,10 @@ export class ConcurrentEngine {
       adapters.map(async (adapter) => ({
         adapter,
         isAvailable: await adapter.isAvailable(),
-      }))
+      })),
     );
 
-    return availabilityChecks
-      .filter((check) => check.isAvailable)
-      .map((check) => check.adapter);
+    return availabilityChecks.filter((check) => check.isAvailable).map((check) => check.adapter);
   }
 
   /**
@@ -112,7 +121,7 @@ export class ConcurrentEngine {
     adapter: ModelAdapter,
     question: string,
     options: AdapterQueryOptions,
-    onProgress?: ProgressCallback
+    onProgress?: ProgressCallback,
   ): Promise<ModelResponse> {
     const maxRetries = this.config.maxRetries;
     let lastError: Error | null = null;
@@ -128,7 +137,7 @@ export class ConcurrentEngine {
       try {
         // 发送开始事件
         onProgress?.({
-          type: 'start',
+          type: "start",
           modelId: adapter.defaultModel,
         });
 
@@ -136,7 +145,7 @@ export class ConcurrentEngine {
         const controller = new AbortController();
         const timeoutId = setTimeout(
           () => controller.abort(),
-          options.timeout || this.config.timeout
+          options.timeout || this.config.timeout,
         );
 
         const response = await adapter.query(question, {
@@ -148,7 +157,7 @@ export class ConcurrentEngine {
 
         // 发送完成事件
         onProgress?.({
-          type: 'complete',
+          type: "complete",
           modelId: adapter.defaultModel,
           data: { content: response.content },
         });
@@ -158,20 +167,20 @@ export class ConcurrentEngine {
         lastError = error instanceof Error ? error : new Error(String(error));
 
         // 超时错误不重试
-        if (lastError.name === 'AbortError') {
+        if (lastError.name === "AbortError") {
           onProgress?.({
-            type: 'error',
+            type: "error",
             modelId: adapter.defaultModel,
-            data: { error: '请求超时' },
+            data: { error: "请求超时" },
           });
 
           return {
             modelId: adapter.defaultModel,
             modelName: adapter.name,
             provider: adapter.provider,
-            status: 'timeout',
-            content: '',
-            error: '请求超时',
+            status: "timeout",
+            content: "",
+            error: "请求超时",
             responseTime: this.config.timeout,
             charCount: 0,
             timestamp: Date.now(),
@@ -182,18 +191,18 @@ export class ConcurrentEngine {
 
     // 所有重试都失败
     onProgress?.({
-      type: 'error',
+      type: "error",
       modelId: adapter.defaultModel,
-      data: { error: lastError?.message || 'Unknown error' },
+      data: { error: lastError?.message || "Unknown error" },
     });
 
     return {
       modelId: adapter.defaultModel,
       modelName: adapter.name,
       provider: adapter.provider,
-      status: 'error',
-      content: '',
-      error: lastError?.message || 'Unknown error',
+      status: "error",
+      content: "",
+      error: lastError?.message || "Unknown error",
       responseTime: 0,
       charCount: 0,
       timestamp: Date.now(),

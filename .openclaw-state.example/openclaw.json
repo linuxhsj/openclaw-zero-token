@@ -47,7 +47,7 @@
     "auth": {
       "mode": "token",
       "token": "62b791625fa441be036acd3c206b7e14e2bb13c803355823"
-  },
+    },
     "tailscale": {
       "mode": "off",
       "resetOnExit": false
