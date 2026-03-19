@@ -46,8 +46,8 @@
 
 ## 配置文件位置
 
-- **配置文件**: `C:\Users\Administrator\tk\.openclaw-upstream-state\openclaw.json`
-- **认证信息**: `C:\Users\Administrator\tk\.openclaw-upstream-state\agents\main\agent\auth-profiles.json`
+- **配置文件**: `.openclaw-upstream-state\openclaw.json`
+- **认证信息**: `.openclaw-upstream-state\agents\main\agent\auth-profiles.json`
 
 ## 使用方法
 
