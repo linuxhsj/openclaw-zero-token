@@ -144,6 +144,7 @@ export function createXiaomiMimoWebStreamFn(cookieOrJson: string): StreamFn {
         const responseStream = await client.chatCompletions({
           conversationId: sessionId,
           message: prompt,
+          systemPrompt: systemPrompt,
           model: model.id,
           signal: streamOptions?.signal,
         });

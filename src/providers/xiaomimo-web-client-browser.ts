@@ -119,17 +119,25 @@ export class XiaomiMimoWebClientBrowser {
   async chatCompletions(params: {
     conversationId?: string;
     message: string;
+    systemPrompt?: string;
     model: string;
     signal?: AbortSignal;
   }): Promise<ReadableStream<Uint8Array>> {
     const { page } = await this.ensureBrowser();
 
     const modelInternal = MODEL_MAP[params.model] || params.model;
-    const convId = params.conversationId || this.conversationId || "0";
+    const convId = params.conversationId || "0";
     const msgId = crypto.randomUUID().replace(/-/g, "");
 
-    console.log(`[XiaomiMimo] Model: ${params.model} -> ${modelInternal}`);
-    console.log(`[XiaomiMimo] Conversation: ${convId}`);
+    // 构建完整消息 (系统提示 + 用户消息)
+    let fullMessage = params.message;
+    if (params.systemPrompt && params.systemPrompt.length > 0) {
+      const sysSnippet = params.systemPrompt.slice(0, 500); // 系统提示截断
+      fullMessage = `[系统提示: ${sysSnippet}]\n\n用户问题: ${params.message}`;
+    }
+
+    console.log(`[XiaomiMimo] Model: ${params.model} → ${modelInternal}`);
+    console.log(`[XiaomiMimo] ConvId: ${convId}, Msg: ${fullMessage.length} chars`);
 
     const result = await page.evaluate(
       async ({ message, modelInternal, convId, msgId }: {
