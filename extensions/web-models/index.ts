@@ -9,8 +9,15 @@
  */
 
 import type { ModelDefinitionConfig } from "openclaw/plugin-sdk/web-models";
-import type { OpenClawPluginApi, ProviderAuthContext, ProviderAuthResult } from "openclaw/plugin-sdk/web-models";
-import { buildOauthProviderAuthResult, emptyPluginConfigSchema } from "openclaw/plugin-sdk/web-models";
+import type {
+  OpenClawPluginApi,
+  ProviderAuthContext,
+  ProviderAuthResult,
+} from "openclaw/plugin-sdk/web-models";
+import {
+  buildOauthProviderAuthResult,
+  emptyPluginConfigSchema,
+} from "openclaw/plugin-sdk/web-models";
 
 // Web Provider 定义
 const WEB_PROVIDERS = [
@@ -74,6 +81,11 @@ const WEB_PROVIDERS = [
     label: "Manus API",
     defaultModel: "manus",
   },
+  {
+    id: "xiaomimo-web",
+    label: "Xiaomi Mimo Web",
+    defaultModel: "xiaomimo-chat",
+  },
 ] as const;
 
 // 凭证标记 - 用于标识通过浏览器认证的 provider
@@ -85,46 +97,185 @@ const WEB_AUTH_PLACEHOLDER = "web-auth";
 function createWebModels(providerId: string): ModelDefinitionConfig[] {
   const modelMap: Record<string, ModelDefinitionConfig[]> = {
     "chatgpt-web": [
-      { id: "gpt-4", name: "GPT-4", input: ["text"], cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }, contextWindow: 8192, maxTokens: 4096 },
+      {
+        id: "gpt-4",
+        name: "GPT-4",
+        input: ["text"],
+        cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+        contextWindow: 8192,
+        maxTokens: 4096,
+      },
     ],
     "claude-web": [
-      { id: "claude-sonnet-4-6", name: "Claude Sonnet 4", input: ["text"], cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }, contextWindow: 200000, maxTokens: 8192 },
-      { id: "claude-opus-4-6", name: "Claude Opus 4", input: ["text"], cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }, contextWindow: 200000, maxTokens: 8192 },
-      { id: "claude-haiku-4-6", name: "Claude Haiku 4", input: ["text"], cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }, contextWindow: 200000, maxTokens: 8192 },
+      {
+        id: "claude-sonnet-4-6",
+        name: "Claude Sonnet 4",
+        input: ["text"],
+        cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+        contextWindow: 200000,
+        maxTokens: 8192,
+      },
+      {
+        id: "claude-opus-4-6",
+        name: "Claude Opus 4",
+        input: ["text"],
+        cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+        contextWindow: 200000,
+        maxTokens: 8192,
+      },
+      {
+        id: "claude-haiku-4-6",
+        name: "Claude Haiku 4",
+        input: ["text"],
+        cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+        contextWindow: 200000,
+        maxTokens: 8192,
+      },
     ],
     "deepseek-web": [
-      { id: "deepseek-chat", name: "DeepSeek V3", input: ["text"], cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }, contextWindow: 64000, maxTokens: 4096 },
-      { id: "deepseek-reasoner", name: "DeepSeek R1", input: ["text"], reasoning: true, cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }, contextWindow: 64000, maxTokens: 4096 },
+      {
+        id: "deepseek-chat",
+        name: "DeepSeek V3",
+        input: ["text"],
+        cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+        contextWindow: 64000,
+        maxTokens: 4096,
+      },
+      {
+        id: "deepseek-reasoner",
+        name: "DeepSeek R1",
+        input: ["text"],
+        reasoning: true,
+        cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+        contextWindow: 64000,
+        maxTokens: 4096,
+      },
     ],
     "doubao-web": [
-      { id: "doubao-seed-2.0", name: "Doubao Seed 2.0", reasoning: true, input: ["text"], cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }, contextWindow: 128000, maxTokens: 4096 },
-      { id: "doubao-pro", name: "Doubao Pro", input: ["text"], cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }, contextWindow: 128000, maxTokens: 4096 },
+      {
+        id: "doubao-seed-2.0",
+        name: "Doubao Seed 2.0",
+        reasoning: true,
+        input: ["text"],
+        cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+        contextWindow: 128000,
+        maxTokens: 4096,
+      },
+      {
+        id: "doubao-pro",
+        name: "Doubao Pro",
+        input: ["text"],
+        cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+        contextWindow: 128000,
+        maxTokens: 4096,
+      },
     ],
     "gemini-web": [
-      { id: "gemini-pro", name: "Gemini Pro", input: ["text"], cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }, contextWindow: 32768, maxTokens: 8192 },
-      { id: "gemini-ultra", name: "Gemini Ultra", input: ["text"], cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }, contextWindow: 32768, maxTokens: 8192 },
+      {
+        id: "gemini-pro",
+        name: "Gemini Pro",
+        input: ["text"],
+        cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+        contextWindow: 32768,
+        maxTokens: 8192,
+      },
+      {
+        id: "gemini-ultra",
+        name: "Gemini Ultra",
+        input: ["text"],
+        cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+        contextWindow: 32768,
+        maxTokens: 8192,
+      },
     ],
     "glm-web": [
-      { id: "glm-4-plus", name: "GLM-4 Plus", input: ["text"], cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }, contextWindow: 128000, maxTokens: 4096 },
+      {
+        id: "glm-4-plus",
+        name: "GLM-4 Plus",
+        input: ["text"],
+        cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+        contextWindow: 128000,
+        maxTokens: 4096,
+      },
     ],
     "glm-intl-web": [
-      { id: "glm-4-plus", name: "GLM-4 Plus", input: ["text"], cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }, contextWindow: 128000, maxTokens: 4096 },
-      { id: "glm-4-think", name: "GLM-4 Think", input: ["text"], reasoning: true, cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }, contextWindow: 128000, maxTokens: 4096 },
+      {
+        id: "glm-4-plus",
+        name: "GLM-4 Plus",
+        input: ["text"],
+        cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+        contextWindow: 128000,
+        maxTokens: 4096,
+      },
+      {
+        id: "glm-4-think",
+        name: "GLM-4 Think",
+        input: ["text"],
+        reasoning: true,
+        cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+        contextWindow: 128000,
+        maxTokens: 4096,
+      },
     ],
     "grok-web": [
-      { id: "grok-2", name: "Grok 2", input: ["text"], cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }, contextWindow: 131072, maxTokens: 8192 },
+      {
+        id: "grok-2",
+        name: "Grok 2",
+        input: ["text"],
+        cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+        contextWindow: 131072,
+        maxTokens: 8192,
+      },
     ],
     "kimi-web": [
-      { id: "moonshot-v1-32k", name: "Kimi", input: ["text"], cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }, contextWindow: 128000, maxTokens: 4096 },
+      {
+        id: "moonshot-v1-32k",
+        name: "Kimi",
+        input: ["text"],
+        cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+        contextWindow: 128000,
+        maxTokens: 4096,
+      },
     ],
     "qwen-web": [
-      { id: "qwen-max", name: "Qwen Max", input: ["text"], cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }, contextWindow: 32768, maxTokens: 4096 },
+      {
+        id: "qwen-max",
+        name: "Qwen Max",
+        input: ["text"],
+        cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+        contextWindow: 32768,
+        maxTokens: 4096,
+      },
     ],
     "qwen-cn-web": [
-      { id: "qwen-turbo", name: "Qwen Turbo", input: ["text"], cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }, contextWindow: 100000, maxTokens: 4096 },
+      {
+        id: "qwen-turbo",
+        name: "Qwen Turbo",
+        input: ["text"],
+        cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+        contextWindow: 100000,
+        maxTokens: 4096,
+      },
     ],
     "manus-api": [
-      { id: "manus", name: "Manus", input: ["text"], cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }, contextWindow: 128000, maxTokens: 4096 },
+      {
+        id: "manus",
+        name: "Manus",
+        input: ["text"],
+        cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+        contextWindow: 128000,
+        maxTokens: 4096,
+      },
+    ],
+    "xiaomimo-web": [
+      {
+        id: "xiaomimo-chat",
+        name: "MiMo Chat",
+        input: ["text"],
+        cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+        contextWindow: 128000,
+        maxTokens: 4096,
+      },
     ],
   };
 

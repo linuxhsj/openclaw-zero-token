@@ -5,31 +5,28 @@
  * 支持同时授权多个 Web 模型
  */
 
-import type { WizardStep } from "../wizard/types.js";
-import { loadConfig, writeConfigFile } from "../config/io.js";
-import type { OpenClawConfig } from "../config/config.js";
-import { resolveBrowserConfig, resolveProfile } from "../browser/config.js";
 import { ensureAuthProfileStore, saveAuthProfileStore } from "../agents/auth-profiles.js";
 import type { AuthProfileStore } from "../agents/auth-profiles/types.js";
-
+import { resolveBrowserConfig, resolveProfile } from "../browser/config.js";
+import type { OpenClawConfig } from "../config/config.js";
+import { loadConfig, writeConfigFile } from "../config/io.js";
+import { loginChatGPTWeb } from "../providers/chatgpt-web-auth.js";
 // 导入各个 web 模型的登录函数
 import { loginClaudeWeb } from "../providers/claude-web-auth.js";
-import { loginChatGPTWeb } from "../providers/chatgpt-web-auth.js";
 import { loginDeepseekWeb } from "../providers/deepseek-web-auth.js";
 import { loginDoubaoWeb } from "../providers/doubao-web-auth.js";
 import { loginGeminiWeb } from "../providers/gemini-web-auth.js";
-import { loginZWeb } from "../providers/glm-web-auth.js";
 import { loginGlmIntlWeb } from "../providers/glm-intl-web-auth.js";
+import { loginZWeb } from "../providers/glm-web-auth.js";
 import { loginGrokWeb } from "../providers/grok-web-auth.js";
 import { loginKimiWeb } from "../providers/kimi-web-auth.js";
-import { loginQwenWeb } from "../providers/qwen-web-auth.js";
 import { loginQwenCNWeb } from "../providers/qwen-cn-web-auth.js";
+import { loginQwenWeb } from "../providers/qwen-web-auth.js";
+import { loginXiaomiMimoWeb } from "../providers/xiaomimo-web-auth.js";
+import type { WizardStep } from "../wizard/types.js";
 
 // Web 模型凭证保存助手函数
-async function saveWebModelCredentials(
-  providerId: string,
-  credentials: unknown
-): Promise<void> {
+async function saveWebModelCredentials(providerId: string, credentials: unknown): Promise<void> {
   const store = ensureAuthProfileStore();
   const profileId = `${providerId}:default`;
 
@@ -127,6 +124,7 @@ const WEB_MODEL_PROVIDERS: WebModelProvider[] = [
   { id: "kimi-web", name: "Kimi Web", loginFn: loginKimiWeb },
   { id: "qwen-web", name: "Qwen Web (阿里国内)", loginFn: loginQwenWeb },
   { id: "qwen-cn-web", name: "Qwen Web (阿里国际)", loginFn: loginQwenCNWeb },
+  { id: "xiaomimo-web", name: "Xiaomi Mimo Web", loginFn: loginXiaomiMimoWeb },
 ];
 
 export async function runOnboardWebAuth(): Promise<void> {
@@ -134,8 +132,8 @@ export async function runOnboardWebAuth(): Promise<void> {
 
   // 显示已授权的模型
   const store = ensureAuthProfileStore();
-  const authorizedModels = Object.keys(store.profiles).filter((key) =>
-    key.endsWith("-web") || key.includes("-web:")
+  const authorizedModels = Object.keys(store.profiles).filter(
+    (key) => key.endsWith("-web") || key.includes("-web:"),
   );
 
   if (authorizedModels.length > 0) {
@@ -211,6 +209,7 @@ export async function runOnboardWebAuth(): Promise<void> {
     "kimi-web": ["moonshot-v1-32k"],
     "qwen-web": ["qwen-max"],
     "qwen-cn-web": ["qwen-turbo"],
+    "xiaomimo-web": ["xiaomimo-chat"],
   };
 
   // 逐个授权

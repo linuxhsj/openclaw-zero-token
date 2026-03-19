@@ -483,7 +483,8 @@ export function normalizeProviders(params: {
     let normalizedProvider = provider;
 
     // Fix common misconfig: apiKey set to "${ENV_VAR}" instead of "ENV_VAR".
-    const apiKeyStr = typeof normalizedProvider.apiKey === "string" ? normalizedProvider.apiKey : undefined;
+    const apiKeyStr =
+      typeof normalizedProvider.apiKey === "string" ? normalizedProvider.apiKey : undefined;
     if (apiKeyStr && normalizeApiKeyConfig(apiKeyStr) !== apiKeyStr) {
       mutated = true;
       normalizedProvider = {
@@ -538,9 +539,7 @@ export function normalizeProviders(params: {
       const seen = new Set(
         (existing.models as Array<{ id?: string }>).map((m) => m.id).filter(Boolean),
       );
-      const extra = normalizedProvider.models.filter(
-        (m) => m.id && !seen.has(m.id),
-      );
+      const extra = normalizedProvider.models.filter((m) => m.id && !seen.has(m.id));
       if (extra.length > 0) {
         mutated = true;
         next[outputKey] = {
@@ -978,9 +977,7 @@ export async function buildChatGPTWebProvider(params?: {
   };
 }
 
-export async function buildQwenWebProvider(params?: {
-  apiKey?: string;
-}): Promise<ProviderConfig> {
+export async function buildQwenWebProvider(params?: { apiKey?: string }): Promise<ProviderConfig> {
   return {
     baseUrl: QWEN_WEB_BASE_URL,
     api: "qwen-web",
@@ -1041,9 +1038,7 @@ export async function buildQwenCNWebProvider(params?: {
   };
 }
 
-export async function buildKimiWebProvider(params?: {
-  apiKey?: string;
-}): Promise<ProviderConfig> {
+export async function buildKimiWebProvider(params?: { apiKey?: string }): Promise<ProviderConfig> {
   return {
     baseUrl: KIMI_WEB_BASE_URL,
     api: "kimi-web",
@@ -1108,9 +1103,7 @@ export async function buildGeminiWebProvider(params?: {
   };
 }
 
-export async function buildGrokWebProvider(params?: {
-  apiKey?: string;
-}): Promise<ProviderConfig> {
+export async function buildGrokWebProvider(params?: { apiKey?: string }): Promise<ProviderConfig> {
   return {
     baseUrl: GROK_WEB_BASE_URL,
     api: "grok-web",
@@ -1137,9 +1130,7 @@ export async function buildGrokWebProvider(params?: {
   };
 }
 
-export async function buildZWebProvider(params?: {
-  apiKey?: string;
-}): Promise<ProviderConfig> {
+export async function buildZWebProvider(params?: { apiKey?: string }): Promise<ProviderConfig> {
   return {
     baseUrl: Z_WEB_BASE_URL,
     api: "glm-web",
@@ -1223,6 +1214,29 @@ export function buildManusApiProvider(): ProviderConfig {
         cost: MANUS_API_DEFAULT_COST,
         contextWindow: MANUS_API_DEFAULT_CONTEXT_WINDOW,
         maxTokens: MANUS_API_DEFAULT_MAX_TOKENS,
+      },
+    ],
+  };
+}
+
+const XIAOMIMO_WEB_BASE_URL = "https://aistudio.xiaomimimo.com";
+const XIAOMIMO_WEB_DEFAULT_CONTEXT_WINDOW = 128000;
+const XIAOMIMO_WEB_DEFAULT_MAX_TOKENS = 4096;
+const XIAOMIMO_WEB_DEFAULT_COST = { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 };
+
+export function buildXiaomiMimoWebProvider(params?: { apiKey?: string }): ProviderConfig {
+  return {
+    baseUrl: XIAOMIMO_WEB_BASE_URL,
+    api: "xiaomimo-web",
+    models: [
+      {
+        id: "xiaomimo-chat",
+        name: "MiMo Chat",
+        reasoning: false,
+        input: ["text"],
+        cost: XIAOMIMO_WEB_DEFAULT_COST,
+        contextWindow: XIAOMIMO_WEB_DEFAULT_CONTEXT_WINDOW,
+        maxTokens: XIAOMIMO_WEB_DEFAULT_MAX_TOKENS,
       },
     ],
   };
@@ -1581,6 +1595,15 @@ export async function resolveImplicitProviders(params: {
   providers["manus-api"] = {
     ...buildManusApiProvider(),
     apiKey: manusApiKey,
+  };
+
+  const xiaomimoWebKey =
+    resolveEnvApiKeyVarName("xiaomimo-web") ??
+    resolveApiKeyFromProfiles({ provider: "xiaomimo-web", store: authStore });
+
+  providers["xiaomimo-web"] = {
+    ...(await buildXiaomiMimoWebProvider({ apiKey: xiaomimoWebKey })),
+    apiKey: xiaomimoWebKey,
   };
 
   return providers;

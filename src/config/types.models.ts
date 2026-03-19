@@ -22,6 +22,7 @@ export const MODEL_APIS = [
   "qwen-cn-web",
   "doubao-web",
   "manus-api",
+  "xiaomimo-web",
 ] as const;
 
 export type ModelApi = (typeof MODEL_APIS)[number];
