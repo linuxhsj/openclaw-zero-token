@@ -60,7 +60,7 @@
 ### 访问 Web UI
 
 - URL: http://127.0.0.1:3001
-- Token: `62b791625fa441be036acd3c206b7e14e2bb13c803355823`
+- Token: `Auto Build`
 
 ### 在代码中使用模型
 
