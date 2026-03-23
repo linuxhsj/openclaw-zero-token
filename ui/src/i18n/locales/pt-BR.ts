@@ -119,11 +119,12 @@ export const pt_BR: TranslationMap = {
     onboardingDisabled: "Desativado durante a integração",
   },
   languages: {
-    en: "English",
-    zhCN: "简体中文 (Chinês Simplificado)",
-    zhTW: "繁體中文 (Chinês Tradicional)",
-    ptBR: "Português (Português Brasileiro)",
-    de: "Deutsch (Alemão)",
-    es: "Español (Espanhol)",
+    en: "Inglês (English)",
+    zhCN: "Chinês Simplificado (简体中文)",
+    zhTW: "Chinês Tradicional (繁體中文)",
+    ptBR: "Português",
+    de: "Alemão (Deutsch)",
+    es: "Espanhol (Español)",
+    vi: "Vietnamita (Tiếng Việt)",
   },
 };
