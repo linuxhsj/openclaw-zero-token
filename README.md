@@ -28,8 +28,6 @@ English | [简体中文](README.zh-CN.md)
 
 ---
 
-<a id="overview"></a>
-
 ## Overview
 
 OpenClaw Zero Token is a fork of [OpenClaw](https://github.com/openclaw/openclaw) that focuses on **removing API token cost** by driving the official web UIs (browser login) instead of paid API keys.
@@ -81,8 +79,6 @@ AskOnce can broadcast a single query to multiple configured providers and show t
 ![AskOnce: ask once, multi-model answers](askonce.png)
 
 ---
-
-<a id="how-it-works"></a>
 
 ## How It Works
 
@@ -145,8 +141,6 @@ AskOnce can broadcast a single query to multiple configured providers and show t
 
 ---
 
-<a id="quick-start"></a>
-
 ## Quick Start
 
 > **Platforms**
@@ -165,14 +159,14 @@ AskOnce can broadcast a single query to multiple configured providers and show t
 
 ```text
 First-time:
-  1. Build          npm install && npm run build && pnpm ui:build
+  1. Build          pnpm install && pnpm build && pnpm ui:build
   2. Start Chrome   ./start-chrome-debug.sh
   3. Login sites    Qwen intl/cn, Kimi, DeepSeek, ...
   4. Onboard        ./onboard.sh webauth
-  5. Start server   ./server.sh start
+  5. Start server   ./server.sh
 
 Daily:
-  start-chrome-debug.sh → onboard.sh → server.sh start
+  start-chrome-debug.sh → onboard.sh → server.sh
   server.sh [start|stop|restart|status] manages the gateway
 ```
 
@@ -182,7 +176,7 @@ Daily:
 | ----------------------- | -------------------------- | ------------------------------------------------------------------------ |
 | `start-chrome-debug.sh` | Start Chrome in debug mode | Step 2: open browser on port 9222 for logins + onboarding                |
 | `onboard.sh`            | Auth/onboarding wizard     | Step 4/5: select provider (e.g. `deepseek-web`) and capture credentials  |
-| `server.sh`             | Manage gateway service     | Step 6 & daily use: `start` / `stop` / `restart` / `status` on port 3001 |
+| `server.sh`             | Manage gateway service     | Step 5 & daily use: `start` / `stop` / `restart` / `status` on port 3002 |
 
 ### Installation
 
@@ -258,8 +252,6 @@ This will start the HTTP gateway and Web UI.
 
 ---
 
-<a id="usage"></a>
-
 ## Usage
 
 ### Web UI
@@ -313,7 +305,7 @@ deepseek-web/deepseek-chat                 text       64k      no    no    confi
 ### HTTP API
 
 ```bash
-curl http://127.0.0.1:3001/v1/chat/completions \
+curl http://127.0.0.1:3002/v1/chat/completions \
   -H "Authorization: Bearer YOUR_GATEWAY_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -329,8 +321,6 @@ node openclaw.mjs tui
 ```
 
 ---
-
-<a id="configuration"></a>
 
 ## Configuration
 
@@ -370,7 +360,7 @@ node openclaw.mjs tui
     }
   },
   "gateway": {
-    "port": 3001,
+    "port": 3002,
     "auth": {
       "mode": "token",
       "token": "your-gateway-token"
@@ -380,8 +370,6 @@ node openclaw.mjs tui
 ```
 
 ---
-
-<a id="troubleshooting"></a>
 
 ## Troubleshooting
 
@@ -418,8 +406,6 @@ The doctor command will:
 
 ---
 
-<a id="roadmap"></a>
-
 ## Roadmap
 
 ### Current focus
@@ -433,8 +419,6 @@ The doctor command will:
 - 🔜 Auto-refresh for expired web sessions
 
 ---
-
-<a id="adding-new-platforms"></a>
 
 ## Adding New Platforms
 
@@ -473,8 +457,6 @@ export function createPlatformWebStreamFn(credentials: string): StreamFn {
 
 ---
 
-<a id="file-structure"></a>
-
 ## File Structure
 
 ```text
@@ -499,8 +481,6 @@ openclaw-zero-token/
 
 ---
 
-<a id="security"></a>
-
 ## Security Notes
 
 1. **Credential storage**: cookies and bearer tokens live in local `auth.json` and must **never** be committed.
@@ -509,8 +489,6 @@ openclaw-zero-token/
 4. **Compliance**: this project is for personal learning and experimentation. Always follow each platform’s Terms of Service.
 
 ---
-
-<a id="upstream-sync"></a>
 
 ## Sync With Upstream OpenClaw
 
@@ -524,8 +502,6 @@ git merge upstream/main
 
 ---
 
-<a id="contributing"></a>
-
 ## Contributing
 
 PRs are welcome, especially for:
@@ -535,15 +511,11 @@ PRs are welcome, especially for:
 
 ---
 
-<a id="license"></a>
-
 ## License
 
 [MIT License](LICENSE)
 
 ---
-
-<a id="acknowledgments"></a>
 
 ## Acknowledgments
 
@@ -551,8 +523,6 @@ PRs are welcome, especially for:
 - [DeepSeek](https://deepseek.com) — excellent AI models
 
 ---
-
-<a id="disclaimer"></a>
 
 ## Disclaimer
 
