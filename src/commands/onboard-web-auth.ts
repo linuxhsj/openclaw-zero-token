@@ -27,6 +27,7 @@ import { loginQwenCNWeb } from "../providers/qwen-cn-web-auth.js";
 import { loginQwenWeb } from "../providers/qwen-web-auth.js";
 import { loginXiaomiMimoWeb } from "../providers/xiaomimo-web-auth.js";
 import type { WizardStep } from "../wizard/types.js";
+import { applyAgentDefaultModelPrimary } from "./onboard-auth.config-shared.js";
 
 // Web 模型凭证保存助手函数
 async function saveWebModelCredentials(providerId: string, credentials: unknown): Promise<void> {

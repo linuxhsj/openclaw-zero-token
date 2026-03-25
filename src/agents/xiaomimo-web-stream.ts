@@ -465,10 +465,11 @@ export function createXiaomiMimoWebStreamFn(cookieOrJson: string): StreamFn {
         }
 
         if (tagBuffer) {
+          const currentModeValue = currentMode as "text" | "thinking" | "tool_call";
           const mode =
-            currentMode === "thinking"
+            currentModeValue === "thinking"
               ? "thinking"
-              : currentMode === "tool_call"
+              : currentModeValue === "tool_call"
                 ? "toolcall"
                 : "text";
           emitDelta(mode, tagBuffer);
