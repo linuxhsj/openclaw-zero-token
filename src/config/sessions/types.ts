@@ -318,8 +318,68 @@ export type SessionSkillSnapshot = {
   version?: number;
 };
 
+export type SessionStartupRecommendationSection = {
+  section: string;
+  excerpt: string;
+  score: number;
+};
+
+export type SessionStartupRecommendationFile = {
+  rank: number;
+  path: string;
+  sourceType: string;
+  title: string;
+  rationale: string;
+  sections: SessionStartupRecommendationSection[];
+};
+
+export const SESSION_TASK_TEXT_SOURCE_VALUES = [
+  "prompt",
+  "history",
+  "extra_system_prompt",
+  "none",
+  "cli_direct",
+  "webhook",
+  "followup_queue",
+  "cron_trigger",
+  "openai_http",
+  "openresponses_http",
+  "boot_prompt",
+  "node_voice",
+  "node_request",
+] as const;
+
+export type SessionTaskTextSource =
+  | (typeof SESSION_TASK_TEXT_SOURCE_VALUES)[number];
+
+export type SessionStartupAdvisory = {
+  mode: "advisory";
+  source: "pageindex-startup-context" | "cached";
+  status: "ready" | "unavailable" | "not_applicable";
+  taskShape:
+    | "debug_runtime"
+    | "skill_routing_policy"
+    | "research_long_doc"
+    | "source_discovery"
+    | "general";
+  routeMode?: "skill" | "workflow" | "hybrid";
+  skillHints?: string[];
+  workflowHints?: string[];
+  routeReason?: string;
+  note: string;
+  recommendationCount: number;
+  generatedAt?: string;
+  indexVersion?: string;
+  recommendedFiles: SessionStartupRecommendationFile[];
+  autoAttachStatus?: "applied" | "skipped" | "not_eligible";
+  autoAttachNote?: string;
+  autoAttachedFiles?: string[];
+  error?: string;
+};
+
 export type SessionSystemPromptReport = {
   source: "run" | "estimate";
+  detailLevel?: "full" | "summary";
   generatedAt: number;
   sessionId?: string;
   sessionKey?: string;
@@ -337,6 +397,10 @@ export type SessionSystemPromptReport = {
     nearLimitFiles?: number;
     totalNearLimit?: boolean;
   };
+  taskTextChars?: number;
+  taskTextSource?: SessionTaskTextSource;
+  taskTextPreview?: string;
+  startupAdvisory?: SessionStartupAdvisory;
   sandbox?: {
     mode?: string;
     sandboxed?: boolean;
