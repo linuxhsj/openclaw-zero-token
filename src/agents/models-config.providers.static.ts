@@ -36,7 +36,7 @@ type ProviderConfig = NonNullable<ModelsConfig["providers"]>[string];
 type ProviderModelConfig = NonNullable<ProviderConfig["models"]>[number];
 
 const MINIMAX_PORTAL_BASE_URL = "https://api.minimax.io/anthropic";
-const MINIMAX_DEFAULT_MODEL_ID = "MiniMax-M2.5";
+const MINIMAX_DEFAULT_MODEL_ID = "MiniMax-M2.7";
 const MINIMAX_DEFAULT_VISION_MODEL_ID = "MiniMax-VL-01";
 const MINIMAX_DEFAULT_CONTEXT_WINDOW = 200000;
 const MINIMAX_DEFAULT_MAX_TOKENS = 8192;
@@ -156,6 +156,16 @@ export function buildMinimaxProvider(): ProviderConfig {
     api: "anthropic-messages",
     authHeader: true,
     models: [
+      buildMinimaxTextModel({
+        id: "MiniMax-M2.7",
+        name: "MiniMax M2.7",
+        reasoning: true,
+      }),
+      buildMinimaxTextModel({
+        id: "MiniMax-M2.7-highspeed",
+        name: "MiniMax M2.7 Highspeed",
+        reasoning: true,
+      }),
       buildMinimaxModel({
         id: MINIMAX_DEFAULT_VISION_MODEL_ID,
         name: "MiniMax VL 01",
@@ -182,6 +192,16 @@ export function buildMinimaxPortalProvider(): ProviderConfig {
     api: "anthropic-messages",
     authHeader: true,
     models: [
+      buildMinimaxTextModel({
+        id: MINIMAX_DEFAULT_MODEL_ID,
+        name: "MiniMax M2.7",
+        reasoning: true,
+      }),
+      buildMinimaxTextModel({
+        id: "MiniMax-M2.7-highspeed",
+        name: "MiniMax M2.7 Highspeed",
+        reasoning: true,
+      }),
       buildMinimaxModel({
         id: MINIMAX_DEFAULT_VISION_MODEL_ID,
         name: "MiniMax VL 01",
@@ -189,7 +209,7 @@ export function buildMinimaxPortalProvider(): ProviderConfig {
         input: ["text", "image"],
       }),
       buildMinimaxTextModel({
-        id: MINIMAX_DEFAULT_MODEL_ID,
+        id: "MiniMax-M2.5",
         name: "MiniMax M2.5",
         reasoning: true,
       }),

@@ -36,14 +36,18 @@ describe("minimax provider catalog", () => {
 
     const providers = await resolveImplicitProvidersForTest({ agentDir });
     expect(providers?.minimax?.models?.map((model) => model.id)).toEqual([
-      "MiniMax-VL-01",
+      "MiniMax-M2.7",
+      "MiniMax-M2.7-highspeed",
       "MiniMax-M2.5",
-      "MiniMax-M2.5-highspeed",
+      "MiniMax-M2.5-Lightning",
+      "MiniMax-M2.1",
+      "MiniMax-M2.1-lightning",
+      "MiniMax-VL-01",
     ]);
     expect(providers?.["minimax-portal"]?.models?.map((model) => model.id)).toEqual([
-      "MiniMax-VL-01",
+      "MiniMax-M2.7",
+      "MiniMax-M2.7-highspeed",
       "MiniMax-M2.5",
-      "MiniMax-M2.5-highspeed",
     ]);
   });
 });

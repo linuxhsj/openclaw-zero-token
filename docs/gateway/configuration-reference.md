@@ -863,11 +863,11 @@ Time format in system prompt. Default: `auto` (OS preference).
     defaults: {
       models: {
         "anthropic/claude-opus-4-6": { alias: "opus" },
-        "minimax/MiniMax-M2.5": { alias: "minimax" },
+        "minimax/MiniMax-M2.7": { alias: "minimax" },
       },
       model: {
         primary: "anthropic/claude-opus-4-6",
-        fallbacks: ["minimax/MiniMax-M2.5"],
+        fallbacks: ["minimax/MiniMax-M2.7"],
       },
       imageModel: {
         primary: "openrouter/qwen/qwen-2.5-vl-72b-instruct:free",
@@ -1960,7 +1960,7 @@ Notes:
   agents: {
     defaults: {
       subagents: {
-        model: "minimax/MiniMax-M2.5",
+        model: "minimax/MiniMax-M2.7",
         maxConcurrent: 1,
         runTimeoutSeconds: 900,
         archiveAfterMinutes: 60,
@@ -2211,15 +2211,15 @@ Base URL should omit `/v1` (Anthropic client appends it). Shortcut: `openclaw on
 
 </Accordion>
 
-<Accordion title="MiniMax M2.5 (direct)">
+<Accordion title="MiniMax M2.7 (direct)">
 
 ```json5
 {
   agents: {
     defaults: {
-      model: { primary: "minimax/MiniMax-M2.5" },
+      model: { primary: "minimax/MiniMax-M2.7" },
       models: {
-        "minimax/MiniMax-M2.5": { alias: "Minimax" },
+        "minimax/MiniMax-M2.7": { alias: "Minimax" },
       },
     },
   },
@@ -2232,9 +2232,9 @@ Base URL should omit `/v1` (Anthropic client appends it). Shortcut: `openclaw on
         api: "anthropic-messages",
         models: [
           {
-            id: "MiniMax-M2.5",
-            name: "MiniMax M2.5",
-            reasoning: false,
+            id: "MiniMax-M2.7",
+            name: "MiniMax M2.7",
+            reasoning: true,
             input: ["text"],
             cost: { input: 15, output: 60, cacheRead: 2, cacheWrite: 10 },
             contextWindow: 200000,
