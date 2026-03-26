@@ -1,0 +1,159 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug OpenClaw CLI",
+            "type": "node",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "runtimeExecutable": "bun",
+            "program": "${workspaceFolder}/src/index.ts",
+            "console": "integratedTerminal",
+            "internalConsoleOptions": "neverOpen"
+        },
+        {
+            "name": "Debug Onboard (Hot Reload)",
+            "type": "node",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "runtimeExecutable": "node",
+            "runtimeArgs": [
+                "--import",
+                "tsx",
+                "${workspaceFolder}/scripts/run-node.mjs",
+                "onboard"
+            ],
+            "console": "integratedTerminal",
+            "internalConsoleOptions": "neverOpen",
+            "env": {
+                "OPENCLAW_CONFIG_PATH": "${workspaceFolder}/.openclaw-upstream-state/openclaw.json",
+                "OPENCLAW_STATE_DIR": "${workspaceFolder}/.openclaw-upstream-state",
+                "OPENCLAW_GATEWAY_PORT": "3002"
+            }
+        },
+        {
+            "name": "Debug WebAuth (Hot Reload)",
+            "type": "node",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "runtimeExecutable": "node",
+            "runtimeArgs": [
+                "--import",
+                "tsx",
+                "${workspaceFolder}/scripts/run-node.mjs",
+                "webauth"
+            ],
+            "console": "integratedTerminal",
+            "internalConsoleOptions": "neverOpen",
+            "env": {
+                "OPENCLAW_CONFIG_PATH": "${workspaceFolder}/.openclaw-upstream-state/openclaw.json",
+                "OPENCLAW_STATE_DIR": "${workspaceFolder}/.openclaw-upstream-state",
+                "OPENCLAW_GATEWAY_PORT": "3002"
+            }
+        },
+        {
+            "name": "Debug Configure (Hot Reload)",
+            "type": "node",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "runtimeExecutable": "node",
+            "runtimeArgs": [
+                "--import",
+                "tsx",
+                "${workspaceFolder}/scripts/run-node.mjs",
+                "configure"
+            ],
+            "console": "integratedTerminal",
+            "internalConsoleOptions": "neverOpen",
+            "env": {
+                "OPENCLAW_CONFIG_PATH": "${workspaceFolder}/.openclaw-upstream-state/openclaw.json",
+                "OPENCLAW_STATE_DIR": "${workspaceFolder}/.openclaw-upstream-state",
+                "OPENCLAW_GATEWAY_PORT": "3002"
+            }
+        },
+        {
+            "name": "Debug Gateway (server.sh - Hot Reload)",
+            "type": "node",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "runtimeExecutable": "node",
+            "runtimeArgs": [
+                "--import",
+                "tsx",
+                "${workspaceFolder}/scripts/run-node.mjs",
+                "gateway",
+                "--port",
+                "3002"
+            ],
+            "console": "integratedTerminal",
+            "internalConsoleOptions": "neverOpen",
+            "env": {
+                "OPENCLAW_CONFIG_PATH": "${workspaceFolder}/.openclaw-upstream-state/openclaw.json",
+                "OPENCLAW_STATE_DIR": "${workspaceFolder}/.openclaw-upstream-state",
+                "OPENCLAW_GATEWAY_PORT": "3002"
+            }
+        },
+        {
+            "name": "Debug Dev Mode (Hot Reload)",
+            "type": "node",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "runtimeExecutable": "node",
+            "runtimeArgs": [
+                "--import",
+                "tsx",
+                "${workspaceFolder}/scripts/run-node.mjs",
+                "dev"
+            ],
+            "console": "integratedTerminal",
+            "internalConsoleOptions": "neverOpen"
+        },
+        {
+            "name": "Debug TUI (Hot Reload)",
+            "type": "node",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "runtimeExecutable": "node",
+            "runtimeArgs": [
+                "--import",
+                "tsx",
+                "${workspaceFolder}/scripts/run-node.mjs",
+                "tui",
+                "--dev"
+            ],
+            "console": "integratedTerminal",
+            "internalConsoleOptions": "neverOpen",
+            "env": {
+                "OPENCLAW_PROFILE": "dev",
+                "CLAWDBOT_PROFILE": "dev",
+                "OPENCLAW_CONFIG_PATH": "${workspaceFolder}/.openclaw-upstream-state/openclaw.json",
+                "OPENCLAW_STATE_DIR": "${workspaceFolder}/.openclaw-upstream-state",
+                "OPENCLAW_GATEWAY_PORT": "3002"
+            }
+        },
+        {
+            "name": "Debug UI Build",
+            "type": "node",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "runtimeExecutable": "node",
+            "runtimeArgs": [
+                "--import",
+                "tsx"
+            ],
+            "program": "${workspaceFolder}/scripts/ui.js",
+            "args": [
+                "build"
+            ],
+            "console": "integratedTerminal",
+            "internalConsoleOptions": "neverOpen"
+        },
+        {
+            "name": "Attach to Process",
+            "type": "node",
+            "request": "attach",
+            "port": 9229,
+            "cwd": "${workspaceFolder}"
+        }
+    ]
+}

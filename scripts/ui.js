@@ -32,6 +32,18 @@ function which(cmd) {
         const candidate = path.join(entry, process.platform === "win32" ? `${cmd}${ext}` : cmd);
         try {
           if (fs.existsSync(candidate)) {
+            if (process.platform === "win32") {
+              const basename = path.basename(candidate);
+
+              // Simple approach: just add the directory to PATH and return basename
+              // This avoids all spawn testing complexity
+              const currentPath = process.env[key] ?? "";
+              if (!currentPath.includes(entry)) {
+                process.env[key] = entry + path.delimiter + currentPath;
+              }
+
+              return basename;
+            }
             return candidate;
           }
         } catch {

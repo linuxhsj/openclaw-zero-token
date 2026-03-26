@@ -1,4 +1,5 @@
 import { html, nothing } from "lit";
+import { unsafeHTML } from "lit/directives/unsafe-html.js";
 import type { LogEntry, LogLevel } from "../types.ts";
 
 const LEVELS: LogLevel[] = ["trace", "debug", "info", "warn", "error", "fatal"];
@@ -144,7 +145,7 @@ export function renderLogs(props: LogsProps) {
                   <div class="log-time mono">${formatTime(entry.time)}</div>
                   <div class="log-level ${entry.level ?? ""}">${entry.level ?? ""}</div>
                   <div class="log-subsystem mono">${entry.subsystem ?? ""}</div>
-                  <div class="log-message mono">${entry.message ?? entry.raw}</div>
+                <div class="log-message mono">${unsafeHTML(parseAnsiToHtml(entry.message ?? entry.raw))}</div>
                 </div>
               `,
               )
@@ -152,4 +153,119 @@ export function renderLogs(props: LogsProps) {
       </div>
     </section>
   `;
+}
+
+// ANSI color to CSS class mapping
+const ANSI_COLOR_MAP: Record<string, string> = {
+  "30": "ansi-black",
+  "31": "ansi-red",
+  "32": "ansi-green",
+  "33": "ansi-yellow",
+  "34": "ansi-blue",
+  "35": "ansi-magenta",
+  "36": "ansi-cyan",
+  "37": "ansi-white",
+  "90": "ansi-bright-black",
+  "91": "ansi-bright-red",
+  "92": "ansi-bright-green",
+  "93": "ansi-bright-yellow",
+  "94": "ansi-bright-blue",
+  "95": "ansi-bright-magenta",
+  "96": "ansi-bright-cyan",
+  "97": "ansi-bright-white",
+};
+
+/**
+ * Parse ANSI escape sequences and convert to HTML with proper styling.
+ * Handles colors, bold, dim, underline, and reset codes.
+ */
+function parseAnsiToHtml(input: string): string {
+  if (!input) return "";
+  
+  let html = "";
+  let styles: string[] = [];
+  let i = 0;
+  
+  while (i < input.length) {
+    // Check for ANSI escape sequence
+    if (input[i] === "\u001b" && input[i + 1] === "[") {
+      // Find the end of the sequence (ends with 'm')
+      let j = i + 2;
+      while (j < input.length && input[j] !== "m") {
+        j++;
+      }
+      
+      if (j < input.length) {
+        // Extract the parameters between ESC[ and m
+        const params = input.slice(i + 2, j);
+        
+        if (params === "") {
+          // Reset code (ESC[m)
+          styles = [];
+        } else {
+          // Parse individual codes
+          const codes = params.split(";");
+          for (const code of codes) {
+            if (code === "0") {
+              // Reset
+              styles = [];
+            } else if (code === "1") {
+              // Bold
+              styles = styles.filter((s) => !s.startsWith("font-weight"));
+              styles.push("font-weight: bold");
+            } else if (code === "2") {
+              // Dim
+              styles = styles.filter((s) => !s.startsWith("opacity"));
+              styles.push("opacity: 0.6");
+            } else if (code === "4") {
+              // Underline
+              styles = styles.filter((s) => !s.startsWith("text-decoration"));
+              styles.push("text-decoration: underline");
+            } else if (code === "22") {
+              // Normal intensity (not bold, not dim)
+              styles = styles.filter(
+                (s) => !s.startsWith("font-weight") && !s.startsWith("opacity"),
+              );
+            } else if (code === "24") {
+              // No underline
+              styles = styles.filter((s) => !s.startsWith("text-decoration"));
+            } else if (ANSI_COLOR_MAP[code]) {
+              // Foreground color - remove existing color first
+              styles = styles.filter((s) => !s.startsWith("color:"));
+              styles.push(`color: var(--${ANSI_COLOR_MAP[code]}, inherit)`);
+            }
+          }
+        }
+        
+        // Move past the escape sequence
+        i = j + 1;
+        continue;
+      }
+    }
+    
+    // Regular character - output with current styles
+    const char = input[i];
+    if (char) {
+      if (styles.length > 0) {
+        html += `<span style="${styles.join(";")}">${escapeHtml(char)}</span>`;
+      } else {
+        html += escapeHtml(char);
+      }
+    }
+    i++;
+  }
+  
+  return html;
+}
+
+/** Escape HTML special characters */
+function escapeHtml(text: string): string {
+  const map: Record<string, string> = {
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#039;",
+  };
+  return text.replace(/[&<>"']/g, (m) => map[m]!);
 }
