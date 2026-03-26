@@ -9,6 +9,24 @@ import {
   type JsonSchema,
 } from "./config-form.shared.ts";
 
+// Cache for field metadata resolution
+const fieldMetaCache = new Map<string, FieldMeta>();
+
+// Cache for search results to avoid recomputation
+const searchMatchCache = new Map<string, boolean>();
+
+// Limit cache size to prevent memory leaks
+const MAX_CACHE_SIZE = 1000;
+
+function trimCache<K, V>(cache: Map<K, V>, maxSize: number): void {
+  if (cache.size > maxSize) {
+    const firstKey = cache.keys().next().value;
+    if (firstKey !== undefined) {
+      cache.delete(firstKey);
+    }
+  }
+}
+
 const META_KEYS = new Set(["title", "description", "default", "nullable", "tags", "x-tags"]);
 
 function isAnySchema(schema: JsonSchema): boolean {
@@ -156,16 +174,30 @@ function resolveFieldMeta(
   schema: JsonSchema,
   hints: ConfigUiHints,
 ): FieldMeta {
+  const key = pathKey(path);
+  const cacheKey = `${key}|${schema.title ?? ""}|${schema.description ?? ""}`;
+  
+  const cached = fieldMetaCache.get(cacheKey);
+  if (cached) {
+    return cached;
+  }
+  
   const hint = hintForPath(path, hints);
   const label = hint?.label ?? schema.title ?? humanize(String(path.at(-1)));
   const help = hint?.help ?? schema.description;
   const schemaTags = normalizeTags(schema["x-tags"] ?? schema.tags);
   const hintTags = normalizeTags(hint?.tags);
-  return {
+  
+  const result = {
     label,
     help,
     tags: hintTags.length > 0 ? hintTags : schemaTags,
   };
+  
+  trimCache(fieldMetaCache, MAX_CACHE_SIZE);
+  fieldMetaCache.set(cacheKey, result);
+  
+  return result;
 }
 
 function matchesText(text: string, candidates: Array<string | undefined>): boolean {
@@ -236,7 +268,16 @@ export function matchesNodeSearch(params: {
   if (!hasSearchCriteria(criteria)) {
     return true;
   }
+  
+  // Create cache key from path and criteria
+  const cacheKey = `${pathKey(path)}|${criteria.text}|${criteria.tags.join(",")}`;
+  const cached = searchMatchCache.get(cacheKey);
+  if (cached !== undefined) {
+    return cached;
+  }
+  
   if (matchesNodeSelf({ schema, path, hints, criteria })) {
+    searchMatchCache.set(cacheKey, true);
     return true;
   }
 
@@ -258,6 +299,8 @@ export function matchesNodeSearch(params: {
           criteria,
         })
       ) {
+        trimCache(searchMatchCache, MAX_CACHE_SIZE);
+        searchMatchCache.set(cacheKey, true);
         return true;
       }
     }
@@ -277,20 +320,28 @@ export function matchesNodeSearch(params: {
             criteria,
           })
         ) {
+          trimCache(searchMatchCache, MAX_CACHE_SIZE);
+          searchMatchCache.set(cacheKey, true);
           return true;
         }
       }
     }
+    trimCache(searchMatchCache, MAX_CACHE_SIZE);
+    searchMatchCache.set(cacheKey, false);
     return false;
   }
 
   if (type === "array") {
     const itemsSchema = Array.isArray(schema.items) ? schema.items[0] : schema.items;
     if (!itemsSchema) {
+      trimCache(searchMatchCache, MAX_CACHE_SIZE);
+      searchMatchCache.set(cacheKey, false);
       return false;
     }
     const arr = Array.isArray(value) ? value : Array.isArray(schema.default) ? schema.default : [];
     if (arr.length === 0) {
+      trimCache(searchMatchCache, MAX_CACHE_SIZE);
+      searchMatchCache.set(cacheKey, false);
       return false;
     }
     for (let idx = 0; idx < arr.length; idx += 1) {
@@ -303,9 +354,13 @@ export function matchesNodeSearch(params: {
           criteria,
         })
       ) {
+        trimCache(searchMatchCache, MAX_CACHE_SIZE);
+        searchMatchCache.set(cacheKey, true);
         return true;
       }
     }
+    trimCache(searchMatchCache, MAX_CACHE_SIZE);
+    searchMatchCache.set(cacheKey, false);
   }
 
   return false;
@@ -791,7 +846,28 @@ function renderObject(params: {
     `;
   }
 
-  // Nested objects get collapsible treatment
+  // Nested objects get collapsible treatment with lazy loading for large objects
+  const fieldCount = sorted.length + (allowExtra ? 1 : 0);
+  const isLargeObject = fieldCount > 20;
+
+  if (isLargeObject) {
+    return html`
+      <config-lazy-section
+        ?open=${path.length <= 2}
+        placeholder="This section has ${fieldCount} fields. Click to load..."
+      >
+        <span slot="header">
+          <span class="cfg-object__title">${label}</span>
+          ${renderTags(tags)}
+        </span>
+        <div class="cfg-object__content">
+          ${help ? html`<div class="cfg-object__help">${help}</div>` : nothing}
+          ${fields}
+        </div>
+      </config-lazy-section>
+    `;
+  }
+
   return html`
     <details class="cfg-object" ?open=${path.length <= 2}>
       <summary class="cfg-object__header">
@@ -1070,4 +1146,13 @@ function renderMapField(params: {
       }
     </div>
   `;
+}
+
+/**
+ * Clears all caches used for performance optimization.
+ * Call this when the schema or UI hints change significantly.
+ */
+export function clearConfigFormCaches(): void {
+  fieldMetaCache.clear();
+  searchMatchCache.clear();
 }

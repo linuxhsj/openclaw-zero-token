@@ -1,6 +1,7 @@
 import { html, nothing } from "lit";
 import { icons } from "../icons.ts";
 import type { ConfigUiHints } from "../types.ts";
+import { t } from "../../i18n/lib/translate.ts";
 import { matchesNodeSearch, parseConfigSearchQuery, renderNode } from "./config-form.node.ts";
 import { hintForPath, humanize, schemaType, type JsonSchema } from "./config-form.shared.ts";
 
@@ -239,39 +240,113 @@ const sectionIcons = {
 // Section metadata
 export const SECTION_META: Record<string, { label: string; description: string }> = {
   env: {
-    label: "Environment Variables",
-    description: "Environment variables passed to the gateway process",
+    label: t("config.section.env", "Environment Variables"),
+    description: t("config.section.envDesc", "Environment variables passed to the gateway process"),
   },
-  update: { label: "Updates", description: "Auto-update settings and release channel" },
-  agents: { label: "Agents", description: "Agent configurations, models, and identities" },
-  auth: { label: "Authentication", description: "API keys and authentication profiles" },
+  update: {
+    label: t("config.section.update", "Updates"),
+    description: t("config.section.updateDesc", "Auto-update settings and release channel"),
+  },
+  agents: {
+    label: t("config.section.agents", "Agents"),
+    description: t("config.section.agentsDesc", "Agent configurations, models, and identities"),
+  },
+  auth: {
+    label: t("config.section.auth", "Authentication"),
+    description: t("config.section.authDesc", "API keys and authentication profiles"),
+  },
   channels: {
-    label: "Channels",
-    description: "Messaging channels (Telegram, Discord, Slack, etc.)",
+    label: t("config.section.channels", "Channels"),
+    description: t("config.section.channelsDesc", "Messaging channels (Telegram, Discord, Slack, etc.)"),
   },
-  messages: { label: "Messages", description: "Message handling and routing settings" },
-  commands: { label: "Commands", description: "Custom slash commands" },
-  hooks: { label: "Hooks", description: "Webhooks and event hooks" },
-  skills: { label: "Skills", description: "Skill packs and capabilities" },
-  tools: { label: "Tools", description: "Tool configurations (browser, search, etc.)" },
-  gateway: { label: "Gateway", description: "Gateway server settings (port, auth, binding)" },
-  wizard: { label: "Setup Wizard", description: "Setup wizard state and history" },
-  // Additional sections
-  meta: { label: "Metadata", description: "Gateway metadata and version information" },
-  logging: { label: "Logging", description: "Log levels and output configuration" },
-  browser: { label: "Browser", description: "Browser automation settings" },
-  ui: { label: "UI", description: "User interface preferences" },
-  models: { label: "Models", description: "AI model configurations and providers" },
-  bindings: { label: "Bindings", description: "Key bindings and shortcuts" },
-  broadcast: { label: "Broadcast", description: "Broadcast and notification settings" },
-  audio: { label: "Audio", description: "Audio input/output settings" },
-  session: { label: "Session", description: "Session management and persistence" },
-  cron: { label: "Cron", description: "Scheduled tasks and automation" },
-  web: { label: "Web", description: "Web server and API settings" },
-  discovery: { label: "Discovery", description: "Service discovery and networking" },
-  canvasHost: { label: "Canvas Host", description: "Canvas rendering and display" },
-  talk: { label: "Talk", description: "Voice and speech settings" },
-  plugins: { label: "Plugins", description: "Plugin management and extensions" },
+  messages: {
+    label: t("config.section.messages", "Messages"),
+    description: t("config.section.messagesDesc", "Message handling and routing settings"),
+  },
+  commands: {
+    label: t("config.section.commands", "Commands"),
+    description: t("config.section.commandsDesc", "Custom slash commands"),
+  },
+  hooks: {
+    label: t("config.section.hooks", "Hooks"),
+    description: t("config.section.hooksDesc", "Webhooks and event hooks"),
+  },
+  skills: {
+    label: t("config.section.skills", "Skills"),
+    description: t("config.section.skillsDesc", "Skill packs and capabilities"),
+  },
+  tools: {
+    label: t("config.section.tools", "Tools"),
+    description: t("config.section.toolsDesc", "Tool configurations (browser, search, etc.)"),
+  },
+  gateway: {
+    label: t("config.section.gateway", "Gateway"),
+    description: t("config.section.gatewayDesc", "Gateway server settings (port, auth, binding)"),
+  },
+  wizard: {
+    label: t("config.section.wizard", "Setup Wizard"),
+    description: t("config.section.wizardDesc", "Setup wizard state and history"),
+  },
+  meta: {
+    label: t("config.section.meta", "Metadata"),
+    description: t("config.section.metaDesc", "Gateway metadata and version information"),
+  },
+  logging: {
+    label: t("config.section.logging", "Logging"),
+    description: t("config.section.loggingDesc", "Log levels and output configuration"),
+  },
+  browser: {
+    label: t("config.section.browser", "Browser"),
+    description: t("config.section.browserDesc", "Browser automation settings"),
+  },
+  ui: {
+    label: t("config.section.ui", "UI"),
+    description: t("config.section.uiDesc", "User interface preferences"),
+  },
+  models: {
+    label: t("config.section.models", "Models"),
+    description: t("config.section.modelsDesc", "AI model configurations and providers"),
+  },
+  bindings: {
+    label: t("config.section.bindings", "Bindings"),
+    description: t("config.section.bindingsDesc", "Key bindings and shortcuts"),
+  },
+  broadcast: {
+    label: t("config.section.broadcast", "Broadcast"),
+    description: t("config.section.broadcastDesc", "Broadcast and notification settings"),
+  },
+  audio: {
+    label: t("config.section.audio", "Audio"),
+    description: t("config.section.audioDesc", "Audio input/output settings"),
+  },
+  session: {
+    label: t("config.section.session", "Session"),
+    description: t("config.section.sessionDesc", "Session management and persistence"),
+  },
+  cron: {
+    label: t("config.section.cron", "Cron"),
+    description: t("config.section.cronDesc", "Scheduled tasks and automation"),
+  },
+  web: {
+    label: t("config.section.web", "Web"),
+    description: t("config.section.webDesc", "Web server and API settings"),
+  },
+  discovery: {
+    label: t("config.section.discovery", "Discovery"),
+    description: t("config.section.discoveryDesc", "Service discovery and networking"),
+  },
+  canvasHost: {
+    label: t("config.section.canvasHost", "Canvas Host"),
+    description: t("config.section.canvasHostDesc", "Canvas rendering and display"),
+  },
+  talk: {
+    label: t("config.section.talk", "Talk"),
+    description: t("config.section.talkDesc", "Voice and speech settings"),
+  },
+  plugins: {
+    label: t("config.section.plugins", "Plugins"),
+    description: t("config.section.pluginsDesc", "Plugin management and extensions"),
+  },
 };
 
 function getSectionIcon(key: string) {

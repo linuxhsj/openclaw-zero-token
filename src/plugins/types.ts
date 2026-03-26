@@ -89,7 +89,7 @@ export type OpenClawPluginHookOptions = {
   register?: boolean;
 };
 
-export type ProviderAuthKind = "oauth" | "api_key" | "token" | "device_code" | "custom";
+export type ProviderAuthKind = "oauth" | "api_key" | "token" | "device_code" | "custom"|"manual";
 
 export type ProviderAuthResult = {
   profiles: Array<{ profileId: string; credential: AuthProfileCredential }>;
