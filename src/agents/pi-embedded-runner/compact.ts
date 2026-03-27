@@ -60,6 +60,7 @@ import {
 import { createPreparedEmbeddedPiSettingsManager } from "../pi-project-settings.js";
 import { createOpenClawCodingTools } from "../pi-tools.js";
 import { createQwenWebStreamFn } from "../qwen-web-stream.js";
+import { createQwenCNWebStreamFn } from "../qwen-cn-web-stream.js";
 import { ensureRuntimePluginsLoaded } from "../runtime-plugins.js";
 import { resolveSandboxContext } from "../sandbox.js";
 import { repairSessionFileIfNeeded } from "../session-file-repair.js";
@@ -315,9 +316,9 @@ export async function compactEmbeddedPiSessionDirect(
   const fail = (reason: string): EmbeddedPiCompactResult => {
     log.warn(
       `[compaction-diag] end runId=${runId} sessionKey=${params.sessionKey ?? params.sessionId} ` +
-        `diagId=${diagId} trigger=${trigger} provider=${provider}/${modelId} ` +
-        `attempt=${attempt} maxAttempts=${maxAttempts} outcome=failed reason=${classifyCompactionReason(reason)} ` +
-        `durationMs=${Date.now() - startedAt}`,
+      `diagId=${diagId} trigger=${trigger} provider=${provider}/${modelId} ` +
+      `attempt=${attempt} maxAttempts=${maxAttempts} outcome=failed reason=${classifyCompactionReason(reason)} ` +
+      `durationMs=${Date.now() - startedAt}`,
     );
     return {
       ok: false,
@@ -403,13 +404,13 @@ export async function compactEmbeddedPiSessionDirect(
     });
     restoreSkillEnv = params.skillsSnapshot
       ? applySkillEnvOverridesFromSnapshot({
-          snapshot: params.skillsSnapshot,
-          config: params.config,
-        })
+        snapshot: params.skillsSnapshot,
+        config: params.config,
+      })
       : applySkillEnvOverrides({
-          skills: skillEntries ?? [],
-          config: params.config,
-        });
+        skills: skillEntries ?? [],
+        config: params.config,
+      });
     const skillsPrompt = resolveSkillsPromptForRun({
       skillsSnapshot: params.skillsSnapshot,
       entries: shouldLoadSkillEntries ? skillEntries : undefined,
@@ -475,10 +476,10 @@ export async function compactEmbeddedPiSessionDirect(
     const runtimeChannel = normalizeMessageChannel(params.messageChannel ?? params.messageProvider);
     let runtimeCapabilities = runtimeChannel
       ? (resolveChannelCapabilities({
-          cfg: params.config,
-          channel: runtimeChannel,
-          accountId: params.agentAccountId,
-        }) ?? [])
+        cfg: params.config,
+        channel: runtimeChannel,
+        accountId: params.agentAccountId,
+      }) ?? [])
       : undefined;
     if (runtimeChannel === "telegram" && params.config) {
       const inlineButtonsScope = resolveTelegramInlineButtonsScope({
@@ -499,38 +500,38 @@ export async function compactEmbeddedPiSessionDirect(
     const reactionGuidance =
       runtimeChannel && params.config
         ? (() => {
-            if (runtimeChannel === "telegram") {
-              const resolved = resolveTelegramReactionLevel({
-                cfg: params.config,
-                accountId: params.agentAccountId ?? undefined,
-              });
-              const level = resolved.agentReactionGuidance;
-              return level ? { level, channel: "Telegram" } : undefined;
-            }
-            if (runtimeChannel === "signal") {
-              const resolved = resolveSignalReactionLevel({
-                cfg: params.config,
-                accountId: params.agentAccountId ?? undefined,
-              });
-              const level = resolved.agentReactionGuidance;
-              return level ? { level, channel: "Signal" } : undefined;
-            }
-            return undefined;
-          })()
+          if (runtimeChannel === "telegram") {
+            const resolved = resolveTelegramReactionLevel({
+              cfg: params.config,
+              accountId: params.agentAccountId ?? undefined,
+            });
+            const level = resolved.agentReactionGuidance;
+            return level ? { level, channel: "Telegram" } : undefined;
+          }
+          if (runtimeChannel === "signal") {
+            const resolved = resolveSignalReactionLevel({
+              cfg: params.config,
+              accountId: params.agentAccountId ?? undefined,
+            });
+            const level = resolved.agentReactionGuidance;
+            return level ? { level, channel: "Signal" } : undefined;
+          }
+          return undefined;
+        })()
         : undefined;
     // Resolve channel-specific message actions for system prompt
     const channelActions = runtimeChannel
       ? listChannelSupportedActions({
-          cfg: params.config,
-          channel: runtimeChannel,
-        })
+        cfg: params.config,
+        channel: runtimeChannel,
+      })
       : undefined;
     const messageToolHints = runtimeChannel
       ? resolveChannelMessageToolHints({
-          cfg: params.config,
-          channel: runtimeChannel,
-          accountId: params.agentAccountId,
-        })
+        cfg: params.config,
+        channel: runtimeChannel,
+        accountId: params.agentAccountId,
+      })
       : undefined;
 
     const runtimeInfo = {
@@ -684,6 +685,8 @@ export async function compactEmbeddedPiSessionDirect(
           streamFn = createChatGPTWebStreamFn(resolvedApiKey);
         } else if (model.api === "qwen-web") {
           streamFn = createQwenWebStreamFn(resolvedApiKey);
+        } else if (model.api === "qwen-cn-web") {
+          streamFn = createQwenCNWebStreamFn(resolvedApiKey);
         } else if (model.api === "kimi-web") {
           streamFn = createKimiWebStreamFn(resolvedApiKey);
         } else if (model.api === "gemini-web") {
@@ -823,10 +826,10 @@ export async function compactEmbeddedPiSessionDirect(
         if (diagEnabled && preMetrics) {
           log.debug(
             `[compaction-diag] start runId=${runId} sessionKey=${params.sessionKey ?? params.sessionId} ` +
-              `diagId=${diagId} trigger=${trigger} provider=${provider}/${modelId} ` +
-              `attempt=${attempt} maxAttempts=${maxAttempts} ` +
-              `pre.messages=${preMetrics.messages} pre.historyTextChars=${preMetrics.historyTextChars} ` +
-              `pre.toolResultChars=${preMetrics.toolResultChars} pre.estTokens=${preMetrics.estTokens ?? "unknown"}`,
+            `diagId=${diagId} trigger=${trigger} provider=${provider}/${modelId} ` +
+            `attempt=${attempt} maxAttempts=${maxAttempts} ` +
+            `pre.messages=${preMetrics.messages} pre.historyTextChars=${preMetrics.historyTextChars} ` +
+            `pre.toolResultChars=${preMetrics.toolResultChars} pre.estTokens=${preMetrics.estTokens ?? "unknown"}`,
           );
           log.debug(
             `[compaction-diag] contributors diagId=${diagId} top=${JSON.stringify(preMetrics.contributors)}`,
@@ -872,15 +875,15 @@ export async function compactEmbeddedPiSessionDirect(
         if (diagEnabled && preMetrics && postMetrics) {
           log.debug(
             `[compaction-diag] end runId=${runId} sessionKey=${params.sessionKey ?? params.sessionId} ` +
-              `diagId=${diagId} trigger=${trigger} provider=${provider}/${modelId} ` +
-              `attempt=${attempt} maxAttempts=${maxAttempts} outcome=compacted reason=none ` +
-              `durationMs=${Date.now() - compactStartedAt} retrying=false ` +
-              `post.messages=${postMetrics.messages} post.historyTextChars=${postMetrics.historyTextChars} ` +
-              `post.toolResultChars=${postMetrics.toolResultChars} post.estTokens=${postMetrics.estTokens ?? "unknown"} ` +
-              `delta.messages=${postMetrics.messages - preMetrics.messages} ` +
-              `delta.historyTextChars=${postMetrics.historyTextChars - preMetrics.historyTextChars} ` +
-              `delta.toolResultChars=${postMetrics.toolResultChars - preMetrics.toolResultChars} ` +
-              `delta.estTokens=${typeof preMetrics.estTokens === "number" && typeof postMetrics.estTokens === "number" ? postMetrics.estTokens - preMetrics.estTokens : "unknown"}`,
+            `diagId=${diagId} trigger=${trigger} provider=${provider}/${modelId} ` +
+            `attempt=${attempt} maxAttempts=${maxAttempts} outcome=compacted reason=none ` +
+            `durationMs=${Date.now() - compactStartedAt} retrying=false ` +
+            `post.messages=${postMetrics.messages} post.historyTextChars=${postMetrics.historyTextChars} ` +
+            `post.toolResultChars=${postMetrics.toolResultChars} post.estTokens=${postMetrics.estTokens ?? "unknown"} ` +
+            `delta.messages=${postMetrics.messages - preMetrics.messages} ` +
+            `delta.historyTextChars=${postMetrics.historyTextChars - preMetrics.historyTextChars} ` +
+            `delta.toolResultChars=${postMetrics.toolResultChars - preMetrics.toolResultChars} ` +
+            `delta.estTokens=${typeof preMetrics.estTokens === "number" && typeof postMetrics.estTokens === "number" ? postMetrics.estTokens - preMetrics.estTokens : "unknown"}`,
           );
         }
         // TODO(#9611): Consider exposing compaction summaries or post-compaction injection;
@@ -1007,12 +1010,12 @@ export async function compactEmbeddedPiSession(
           reason: result.reason,
           result: result.result
             ? {
-                summary: result.result.summary ?? "",
-                firstKeptEntryId: result.result.firstKeptEntryId ?? "",
-                tokensBefore: result.result.tokensBefore,
-                tokensAfter: result.result.tokensAfter,
-                details: result.result.details,
-              }
+              summary: result.result.summary ?? "",
+              firstKeptEntryId: result.result.firstKeptEntryId ?? "",
+              tokensBefore: result.result.tokensBefore,
+              tokensAfter: result.result.tokensAfter,
+              details: result.result.details,
+            }
             : undefined,
         };
       } finally {

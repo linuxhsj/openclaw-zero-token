@@ -20,6 +20,8 @@ import {
   CHATGPT_WEB_DEFAULT_MODEL_ID,
   QWEN_WEB_BASE_URL,
   QWEN_WEB_DEFAULT_MODEL_ID,
+  QWEN_CN_WEB_BASE_URL,
+  QWEN_CN_WEB_DEFAULT_MODEL_ID,
   KIMI_WEB_BASE_URL,
   KIMI_WEB_DEFAULT_MODEL_ID,
   GEMINI_WEB_BASE_URL,
@@ -147,7 +149,7 @@ export function applyZaiProviderConfig(
   const baseUrl = params?.endpoint
     ? resolveZaiBaseUrl(params.endpoint)
     : (typeof existingProvider?.baseUrl === "string" ? existingProvider.baseUrl : "") ||
-      resolveZaiBaseUrl();
+    resolveZaiBaseUrl();
 
   providers.zai = {
     ...existingProviderRest,
@@ -521,9 +523,9 @@ export function applyAuthProfileConfig(
   const reorderedProviderOrder =
     existingProviderOrder && preferProfileFirst
       ? [
-          params.profileId,
-          ...existingProviderOrder.filter((profileId) => profileId !== params.profileId),
-        ]
+        params.profileId,
+        ...existingProviderOrder.filter((profileId) => profileId !== params.profileId),
+      ]
       : existingProviderOrder;
   const hasMixedConfiguredModes = configuredProviderProfiles.some(
     ({ profileId, mode }) => profileId !== params.profileId && mode !== params.mode,
@@ -531,25 +533,25 @@ export function applyAuthProfileConfig(
   const derivedProviderOrder =
     existingProviderOrder === undefined && preferProfileFirst && hasMixedConfiguredModes
       ? [
-          params.profileId,
-          ...configuredProviderProfiles
-            .map(({ profileId }) => profileId)
-            .filter((profileId) => profileId !== params.profileId),
-        ]
+        params.profileId,
+        ...configuredProviderProfiles
+          .map(({ profileId }) => profileId)
+          .filter((profileId) => profileId !== params.profileId),
+      ]
       : undefined;
   const order =
     existingProviderOrder !== undefined
       ? {
-          ...cfg.auth?.order,
-          [params.provider]: reorderedProviderOrder?.includes(params.profileId)
-            ? reorderedProviderOrder
-            : [...(reorderedProviderOrder ?? []), params.profileId],
-        }
+        ...cfg.auth?.order,
+        [params.provider]: reorderedProviderOrder?.includes(params.profileId)
+          ? reorderedProviderOrder
+          : [...(reorderedProviderOrder ?? []), params.profileId],
+      }
       : derivedProviderOrder
         ? {
-            ...cfg.auth?.order,
-            [params.provider]: derivedProviderOrder,
-          }
+          ...cfg.auth?.order,
+          [params.provider]: derivedProviderOrder,
+        }
         : cfg.auth?.order;
   return {
     ...cfg,
@@ -570,9 +572,9 @@ export function applyQianfanProviderConfig(cfg: OpenClawConfig): OpenClawConfig 
   const defaultProvider = buildQianfanProvider();
   const existingProvider = cfg.models?.providers?.qianfan as
     | {
-        baseUrl?: unknown;
-        api?: unknown;
-      }
+      baseUrl?: unknown;
+      api?: unknown;
+    }
     | undefined;
   const existingBaseUrl =
     typeof existingProvider?.baseUrl === "string" ? existingProvider.baseUrl.trim() : "";
@@ -742,6 +744,36 @@ export function applyQwenWebProviderConfig(cfg: OpenClawConfig): OpenClawConfig 
 export function applyQwenWebConfig(cfg: OpenClawConfig): OpenClawConfig {
   const next = applyQwenWebProviderConfig(cfg);
   return applyAgentDefaultModelPrimary(next, `qwen-web/${QWEN_WEB_DEFAULT_MODEL_ID}`);
+}
+
+
+export function applyQwenCNWebProviderConfig(cfg: OpenClawConfig): OpenClawConfig {
+  const models = { ...cfg.agents?.defaults?.models };
+  models[`qwen-cn-web/${QWEN_CN_WEB_DEFAULT_MODEL_ID}`] = {
+    ...models[`qwen-cn-web/${QWEN_CN_WEB_DEFAULT_MODEL_ID}`],
+    alias: models[`qwen-cn-web/${QWEN_CN_WEB_DEFAULT_MODEL_ID}`]?.alias ?? "Qwen CN Web",
+  };
+
+  const existingProvider = cfg.models?.providers?.["qwen-cn-web"] as
+    | { baseUrl?: unknown; api?: unknown; models?: unknown[] }
+    | undefined;
+  const existingBaseUrl =
+    typeof existingProvider?.baseUrl === "string" ? existingProvider.baseUrl.trim() : "";
+  const resolvedBaseUrl = existingBaseUrl || QWEN_CN_WEB_BASE_URL;
+
+  return applyProviderConfigWithDefaultModels(cfg, {
+    agentModels: models,
+    providerId: "qwen-cn-web",
+    api: "qwen-cn-web",
+    baseUrl: resolvedBaseUrl,
+    defaultModels: (existingProvider?.models as ModelDefinitionConfig[]) || [],
+    defaultModelId: QWEN_CN_WEB_DEFAULT_MODEL_ID,
+  });
+}
+
+export function applyQwenCNWebConfig(cfg: OpenClawConfig): OpenClawConfig {
+  const next = applyQwenCNWebProviderConfig(cfg);
+  return applyAgentDefaultModelPrimary(next, `qwen-cn-web/${QWEN_CN_WEB_DEFAULT_MODEL_ID}`);
 }
 
 export function applyKimiWebProviderConfig(cfg: OpenClawConfig): OpenClawConfig {

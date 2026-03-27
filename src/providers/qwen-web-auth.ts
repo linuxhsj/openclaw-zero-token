@@ -28,13 +28,20 @@ export async function loginQwenWeb(params: {
   let running: Awaited<ReturnType<typeof launchOpenClawChrome>> | { cdpPort: number };
   let didLaunch = false;
 
+  const wsUrl = await getChromeWebSocketUrl(profile.cdpUrl, 5000);
+  if (wsUrl) {
+    browserConfig.attachOnly = true;
+  } else {
+    browserConfig.attachOnly = false;
+  }
+
   if (browserConfig.attachOnly) {
     params.onProgress("Connecting to existing Chrome (attach mode)...");
     const wsUrl = await getChromeWebSocketUrl(profile.cdpUrl, 5000);
     if (!wsUrl) {
       throw new Error(
         `Failed to connect to Chrome at ${profile.cdpUrl}. ` +
-          "Make sure Chrome is running in debug mode (./start-chrome-debug.sh)",
+        "Make sure Chrome is running in debug mode (./start-chrome-debug.sh)",
       );
     }
     running = { cdpPort: profile.cdpPort };
@@ -68,10 +75,15 @@ export async function loginQwenWeb(params: {
       headers: getHeadersWithAuth(wsUrl),
       timeout: 60_000, // 60s，Chrome 多标签或复杂页面时 CDP 握手可能较慢
     });
-    const context = browser.contexts()[0];
-    const page = context.pages()[0] || (await context.newPage());
 
-    await page.goto("https://chat.qwen.ai/");
+    const context = browser.contexts()[0];
+
+    let page = context.pages().find((p) => p.url().includes("chat.qwen.ai"));
+    if (!page) {
+      page = await context.newPage();
+      await page.goto("https://chat.qwen.ai/", { waitUntil: "domcontentloaded" });
+    }
+
     const userAgent = await page.evaluate(() => navigator.userAgent);
 
     params.onProgress("Please login to Qwen in the opened browser window...");

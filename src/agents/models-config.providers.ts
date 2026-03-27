@@ -188,12 +188,21 @@ const CHATGPT_WEB_DEFAULT_COST = {
   cacheRead: 0,
   cacheWrite: 0,
 };
-
 export const QWEN_WEB_BASE_URL = "https://chat.qwen.ai";
-export const QWEN_WEB_DEFAULT_MODEL_ID = "qwen-max";
+export const QWEN_WEB_DEFAULT_MODEL_ID = "Qwen3.5-Plus";
 const QWEN_WEB_DEFAULT_CONTEXT_WINDOW = 32000;
 const QWEN_WEB_DEFAULT_MAX_TOKENS = 8192;
 const QWEN_WEB_DEFAULT_COST = {
+  input: 0,
+  output: 0,
+  cacheRead: 0,
+  cacheWrite: 0,
+};
+export const QWEN_CN_WEB_BASE_URL = "https://chat2.qianwen.com";
+export const QWEN_CN_WEB_DEFAULT_MODEL_ID = "Qwen3.5-Plus";
+const QWEN_CN_WEB_DEFAULT_CONTEXT_WINDOW = 128000;
+const QWEN_CN_WEB_DEFAULT_MAX_TOKENS = 4096;
+const QWEN_CN_WEB_DEFAULT_COST = {
   input: 0,
   output: 0,
   cacheRead: 0,
@@ -1018,10 +1027,6 @@ export async function buildQwenWebProvider(_params?: {
   };
 }
 
-const QWEN_CN_WEB_BASE_URL = "https://chat2.qianwen.com";
-const QWEN_CN_WEB_DEFAULT_COST = { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 };
-const QWEN_CN_WEB_DEFAULT_CONTEXT_WINDOW = 128000;
-const QWEN_CN_WEB_DEFAULT_MAX_TOKENS = 4096;
 
 export async function buildQwenCNWebProvider(_params?: {
   _?: never;
@@ -1570,6 +1575,14 @@ export async function resolveImplicitProviders(params: {
     apiKey: qwenWebKey,
   };
 
+  const qwenCNWebKey =
+    resolveEnvApiKeyVarName("qwen-cn-web") ??
+    resolveApiKeyFromProfiles({ provider: "qwen-cn-web", store: authStore });
+
+  providers["qwen-cn-web"] = {
+    ...(await buildQwenCNWebProvider({ apiKey: qwenCNWebKey })),
+    apiKey: qwenCNWebKey,
+  };
   const kimiWebKey =
     resolveEnvApiKeyVarName("kimi-web") ??
     resolveApiKeyFromProfiles({ provider: "kimi-web", store: authStore });

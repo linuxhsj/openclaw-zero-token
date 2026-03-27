@@ -1,4 +1,12 @@
 import { chromium } from "playwright-core";
+import { getHeadersWithAuth } from "../browser/cdp.helpers.js";
+import {
+  launchOpenClawChrome,
+  stopOpenClawChrome,
+  getChromeWebSocketUrl,
+} from "../browser/chrome.js";
+import { resolveBrowserConfig, resolveProfile } from "../browser/config.js";
+import { loadConfig } from "../config/io.js";
 
 export interface QwenCNWebAuthResult {
   cookie: string;
@@ -13,17 +21,63 @@ export async function loginQwenCNWeb(params: {
 }): Promise<QwenCNWebAuthResult> {
   const { onProgress } = params;
 
-  onProgress("Connecting to Chrome debug port...");
+  const rootConfig = loadConfig();
+  const browserConfig = resolveBrowserConfig(rootConfig.browser, rootConfig);
+  const profile = resolveProfile(browserConfig, browserConfig.defaultProfile);
+  if (!profile) {
+    throw new Error(`Could not resolve browser profile '${browserConfig.defaultProfile}'`);
+  }
 
-  const cdpUrl = "http://127.0.0.1:9222";
-  let browser;
+  let running: Awaited<ReturnType<typeof launchOpenClawChrome>> | { cdpPort: number };
+  let didLaunch = false;
+
+  const wsUrl = await getChromeWebSocketUrl(profile.cdpUrl, 5000);
+  if (wsUrl) {
+    browserConfig.attachOnly = true;
+  } else {
+    browserConfig.attachOnly = false;
+  }
+
+  if (browserConfig.attachOnly) {
+    params.onProgress("Connecting to existing Chrome (attach mode)...");
+    const wsUrl = await getChromeWebSocketUrl(profile.cdpUrl, 5000);
+    if (!wsUrl) {
+      throw new Error(
+        `Failed to connect to Chrome at ${profile.cdpUrl}. ` +
+        "Make sure Chrome is running in debug mode (./start-chrome-debug.sh)",
+      );
+    }
+    running = { cdpPort: profile.cdpPort };
+  } else {
+    params.onProgress("Launching browser...");
+    running = await launchOpenClawChrome(browserConfig, profile);
+    didLaunch = true;
+  }
 
   try {
-    const response = await fetch(`${cdpUrl}/json/version`);
-    const versionInfo = await response.json();
-    const wsUrl = versionInfo.webSocketDebuggerUrl;
 
-    browser = await chromium.connectOverCDP(wsUrl);
+    const cdpUrl = browserConfig.attachOnly ? profile.cdpUrl : `http://127.0.0.1:${running.cdpPort}`;
+    let wsUrl: string | null = null;
+
+    params.onProgress("Waiting for browser debugger...");
+    for (let i = 0; i < 10; i++) {
+      wsUrl = await getChromeWebSocketUrl(cdpUrl, 2000);
+      if (wsUrl) {
+        break;
+      }
+      await new Promise((r) => setTimeout(r, 500));
+    }
+
+    if (!wsUrl) {
+      throw new Error(`Failed to resolve Chrome WebSocket URL from ${cdpUrl} after retries.`);
+    }
+
+    onProgress("Connecting to Chrome debug port...");
+
+    const browser = await chromium.connectOverCDP(wsUrl, {
+      headers: getHeadersWithAuth(wsUrl),
+      timeout: 60_000, // 60s，Chrome 多标签或复杂页面时 CDP 握手可能较慢
+    });
     const context = browser.contexts()[0];
 
     onProgress("Opening Qwen CN (qianwen.com)...");
@@ -50,7 +104,11 @@ export async function loginQwenCNWeb(params: {
       );
 
       if (sessionCookie) {
-        cookie = cookies.map((c) => `${c.name}=${c.value}`).join("; ");
+        // 只取域名为 .qianwen.com 的 cookies
+        cookie = cookies
+          .filter((c) => c.domain?.includes('qianwen.com'))
+          .map((c) => `${c.name}=${c.value}`)
+          .join("; ");
 
         // Try to get xsrf token from page
         try {
@@ -98,10 +156,9 @@ export async function loginQwenCNWeb(params: {
       userAgent,
       ut,
     };
-  } catch (error) {
-    if (browser) {
-      await browser.close();
+  } finally {
+    if (didLaunch && running && "proc" in running) {
+      await stopOpenClawChrome(running);
     }
-    throw error;
   }
 }

@@ -45,6 +45,17 @@ export class QwenWebClientBrowser {
 
   private async ensureBrowser() {
     if (this.browser && this.page) {
+      const pages = this.browser.pages();
+      let qwenPage = pages.find((p: Page) => p.url().includes("qwen.ai"));
+
+      if (qwenPage) {
+        console.log(`[Qwen Web Browser] Found existing Qwen page`);
+        this.page = qwenPage;
+      } else {
+        console.log(`[Qwen Web Browser] Creating new page`);
+        this.page = await this.browser.newPage();
+        await this.page.goto("https://chat.qwen.ai/", { waitUntil: "domcontentloaded" });
+      }
       return { browser: this.browser, page: this.page };
     }
 
@@ -54,7 +65,12 @@ export class QwenWebClientBrowser {
     if (!profile) {
       throw new Error(`Could not resolve browser profile '${browserConfig.defaultProfile}'`);
     }
-
+    const wsUrl = await getChromeWebSocketUrl(profile.cdpUrl, 5000);
+    if (wsUrl) {
+      browserConfig.attachOnly = true;
+    } else {
+      browserConfig.attachOnly = false;
+    }
     if (browserConfig.attachOnly) {
       console.log(`[Qwen Web Browser] Connecting to existing Chrome at ${profile.cdpUrl}`);
 
@@ -70,27 +86,14 @@ export class QwenWebClientBrowser {
       if (!wsUrl) {
         throw new Error(
           `Failed to connect to Chrome at ${profile.cdpUrl}. ` +
-            `Make sure Chrome is running in debug mode`,
+          `Make sure Chrome is running in debug mode`,
         );
       }
 
-      this.browser = (
-        await chromium.connectOverCDP(wsUrl, {
-          headers: getHeadersWithAuth(wsUrl),
-        })
-      ).contexts()[0]!;
+      this.browser = (await chromium.connectOverCDP(wsUrl, {
+        headers: getHeadersWithAuth(wsUrl),
+      })).contexts()[0]!;
 
-      const pages = this.browser.pages();
-      let qwenPage = pages.find((p) => p.url().includes("qwen.ai"));
-
-      if (qwenPage) {
-        console.log(`[Qwen Web Browser] Found existing Qwen page`);
-        this.page = qwenPage;
-      } else {
-        console.log(`[Qwen Web Browser] Creating new page`);
-        this.page = await this.browser.newPage();
-        await this.page.goto("https://chat.qwen.ai/", { waitUntil: "domcontentloaded" });
-      }
 
       console.log(`[Qwen Web Browser] Connected successfully`);
     } else {
@@ -117,7 +120,18 @@ export class QwenWebClientBrowser {
         })
       ).contexts()[0]!;
 
-      this.page = this.browser.pages()[0] || (await this.browser.newPage());
+    }
+
+    const pages = this.browser.pages();
+    let qwenPage = pages.find((p: Page) => p.url().includes("qwen.ai"));
+
+    if (qwenPage) {
+      console.log(`[Qwen Web Browser] Found existing Qwen page`);
+      this.page = qwenPage;
+    } else {
+      console.log(`[Qwen Web Browser] Creating new page`);
+      this.page = await this.browser.newPage();
+      await this.page.goto("https://chat.qwen.ai/", { waitUntil: "domcontentloaded" });
     }
 
     const cookies = this.cookie.split(";").map((c) => {
@@ -193,7 +207,7 @@ export class QwenWebClientBrowser {
           console.log(`[Browser] Chat created, chat ID:`, chatId);
           return { ok: true, chatId, fullData: data };
         } catch (err) {
-          if (typeof timer !== "undefined") {clearTimeout(timer);}
+          if (typeof timer !== "undefined") { clearTimeout(timer); }
           const msg = String(err);
           if (msg.includes("aborted") || msg.includes("signal")) {
             return { ok: false, status: 408, error: `Create chat timed out after ${timeoutMs}ms` };
@@ -289,7 +303,7 @@ export class QwenWebClientBrowser {
 
           while (true) {
             const { done, value } = await reader.read();
-            if (done) {break;}
+            if (done) { break; }
             const chunk = decoder.decode(value, { stream: true });
             fullText += chunk;
             chunkCount++;
@@ -301,7 +315,7 @@ export class QwenWebClientBrowser {
           console.log(`[Browser] Total chunks: ${chunkCount}, Total length: ${fullText.length}`);
           return { ok: true, data: fullText };
         } catch (err) {
-          if (typeof timer !== "undefined") {clearTimeout(timer);}
+          if (typeof timer !== "undefined") { clearTimeout(timer); }
           const msg = String(err);
           if (msg.includes("aborted") || msg.includes("signal")) {
             return {
@@ -336,7 +350,7 @@ export class QwenWebClientBrowser {
       if (responseData?.status === 408) {
         throw new Error(
           `Qwen API request timed out. ${responseData?.error || ""} ` +
-            "Ensure chat.qwen.ai is reachable, Chrome is connected, and you are logged in.",
+          "Ensure chat.qwen.ai is reachable, Chrome is connected, and you are logged in.",
         );
       }
       throw new Error(
