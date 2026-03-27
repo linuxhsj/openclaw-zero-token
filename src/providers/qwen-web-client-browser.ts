@@ -161,76 +161,85 @@ export class QwenWebClientBrowser {
   }): Promise<ReadableStream<Uint8Array>> {
     const { page } = await this.ensureBrowser();
 
+
     const model = params.model || "qwen3.5-plus";
 
     console.log(`[Qwen Web Browser] Sending message`);
     console.log(`[Qwen Web Browser] Model: ${model}`);
     console.log(`[Qwen Web Browser] Message: ${params.message.substring(0, 100)}...`);
 
-    // Step 1: Create a new chat session to get chat_id（30s 超时）
-    const createChatTimeoutMs = 30_000;
-    const createChatResult = await page.evaluate(
-      async ({ baseUrl, timeoutMs }) => {
-        let timer: ReturnType<typeof setTimeout> | undefined = undefined;
-        try {
-          const url = `${baseUrl}/api/v2/chats/new`;
-          console.log(`[Browser] Creating chat: ${url}`);
+    let chatId: string | undefined;
 
-          const controller = new AbortController();
-          timer = setTimeout(() => controller.abort(), timeoutMs);
+    if (params.conversationId) {
+      chatId = params.conversationId;
+    } else {
+      // Step 1: Create a new chat session to get chat_id（30s 超时）
+      const createChatTimeoutMs = 30_000;
+      const createChatResult = await page.evaluate(
+        async ({ baseUrl, timeoutMs }) => {
+          let timer: ReturnType<typeof setTimeout> | undefined = undefined;
+          try {
+            const url = `${baseUrl}/api/v2/chats/new`;
+            console.log(`[Browser] Creating chat: ${url}`);
 
-          const res = await fetch(url, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({}),
-            signal: controller.signal,
-          });
+            const controller = new AbortController();
+            timer = setTimeout(() => controller.abort(), timeoutMs);
 
-          clearTimeout(timer);
+            const res = await fetch(url, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({}),
+              signal: controller.signal,
+            });
 
-          console.log(`[Browser] Create chat response status: ${res.status}`);
-          console.log(
-            `[Browser] Create chat response headers:`,
-            Object.fromEntries(res.headers.entries()),
-          );
+            clearTimeout(timer);
 
-          if (!res.ok) {
-            const errorText = await res.text();
-            console.log(`[Browser] Create chat error response: ${errorText.substring(0, 500)}`);
-            return { ok: false, status: res.status, error: errorText };
+            console.log(`[Browser] Create chat response status: ${res.status}`);
+            console.log(
+              `[Browser] Create chat response headers:`,
+              Object.fromEntries(res.headers.entries()),
+            );
+
+            if (!res.ok) {
+              const errorText = await res.text();
+              console.log(`[Browser] Create chat error response: ${errorText.substring(0, 500)}`);
+              return { ok: false, status: res.status, error: errorText };
+            }
+
+            const data = await res.json();
+            const chatId = data.data?.id ?? data.chat_id ?? data.id ?? data.chatId;
+            console.log(`[Browser] Chat created, chat ID:`, chatId);
+            return { ok: true, chatId, fullData: data };
+          } catch (err) {
+            if (typeof timer !== "undefined") { clearTimeout(timer); }
+            const msg = String(err);
+            if (msg.includes("aborted") || msg.includes("signal")) {
+              return { ok: false, status: 408, error: `Create chat timed out after ${timeoutMs}ms` };
+            }
+            console.error(`[Browser] Create chat exception:`, err);
+            return { ok: false, status: 500, error: msg };
           }
-
-          const data = await res.json();
-          const chatId = data.data?.id ?? data.chat_id ?? data.id ?? data.chatId;
-          console.log(`[Browser] Chat created, chat ID:`, chatId);
-          return { ok: true, chatId, fullData: data };
-        } catch (err) {
-          if (typeof timer !== "undefined") { clearTimeout(timer); }
-          const msg = String(err);
-          if (msg.includes("aborted") || msg.includes("signal")) {
-            return { ok: false, status: 408, error: `Create chat timed out after ${timeoutMs}ms` };
-          }
-          console.error(`[Browser] Create chat exception:`, err);
-          return { ok: false, status: 500, error: msg };
-        }
-      },
-      { baseUrl: this.baseUrl, timeoutMs: createChatTimeoutMs },
-    );
-
-    console.log(`[Qwen Web Browser] Create chat result:`, JSON.stringify(createChatResult));
-
-    if (!createChatResult.ok || !createChatResult.chatId) {
-      console.error(`[Qwen Web Browser] Failed to create chat`);
-      console.error(`[Qwen Web Browser] Error: ${createChatResult.error}`);
-      console.error(`[Qwen Web Browser] Full result:`, JSON.stringify(createChatResult));
-      throw new Error(
-        `Failed to create Qwen chat: ${createChatResult.error || "No chat_id in response"}`,
+        },
+        { baseUrl: this.baseUrl, timeoutMs: createChatTimeoutMs },
       );
+
+      console.log(`[Qwen Web Browser] Create chat result:`, JSON.stringify(createChatResult));
+
+      if (!createChatResult.ok || !createChatResult.chatId) {
+        console.error(`[Qwen Web Browser] Failed to create chat`);
+        console.error(`[Qwen Web Browser] Error: ${createChatResult.error}`);
+        console.error(`[Qwen Web Browser] Full result:`, JSON.stringify(createChatResult));
+        throw new Error(
+          `Failed to create Qwen chat: ${createChatResult.error || "No chat_id in response"}`,
+        );
+      }
+
+      chatId = createChatResult.chatId;
+
     }
 
-    const chatId = createChatResult.chatId;
     console.log(`[Qwen Web Browser] Chat ID: ${chatId}`);
 
     // Step 2: Send message using the chat_id（加入 fetch 超时，默认 5 分钟，避免长时间无响应导致 run 级 timeout）

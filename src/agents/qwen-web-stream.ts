@@ -437,13 +437,12 @@ export function createQwenWebStreamFn(cookieOrJson: string): StreamFn {
             const data = JSON.parse(dataStr);
 
             // Extract conversation ID
-            if (data.sessionId || data.conversationId) {
-              conversationMap.set(sessionKey, data.sessionId || data.conversationId);
+            if (data.sessionId || data.conversationId || data["response.created"].chat_id) {
+              conversationMap.set(sessionKey, data.sessionId || data.conversationId || data["response.created"].chat_id);
             }
 
             // Extract content delta - Qwen v2 uses choices[0].delta.content
-            const delta =
-              data.choices?.[0]?.delta?.content ?? data.text ?? data.content ?? data.delta;
+            const delta = data.choices?.[0]?.delta?.content ?? data.text ?? data.content ?? data.delta;
             if (typeof delta === "string" && delta) {
               pushDelta(delta);
             }

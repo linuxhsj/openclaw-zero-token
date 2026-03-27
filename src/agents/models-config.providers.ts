@@ -189,7 +189,7 @@ const CHATGPT_WEB_DEFAULT_COST = {
   cacheWrite: 0,
 };
 export const QWEN_WEB_BASE_URL = "https://chat.qwen.ai";
-export const QWEN_WEB_DEFAULT_MODEL_ID = "Qwen3.5-Plus";
+export const QWEN_WEB_DEFAULT_MODEL_ID = "qwen3.5-plus";
 const QWEN_WEB_DEFAULT_CONTEXT_WINDOW = 32000;
 const QWEN_WEB_DEFAULT_MAX_TOKENS = 8192;
 const QWEN_WEB_DEFAULT_COST = {
@@ -199,7 +199,7 @@ const QWEN_WEB_DEFAULT_COST = {
   cacheWrite: 0,
 };
 export const QWEN_CN_WEB_BASE_URL = "https://chat2.qianwen.com";
-export const QWEN_CN_WEB_DEFAULT_MODEL_ID = "Qwen3.5-Plus";
+export const QWEN_CN_WEB_DEFAULT_MODEL_ID = "qwen3.5-plus";
 const QWEN_CN_WEB_DEFAULT_CONTEXT_WINDOW = 128000;
 const QWEN_CN_WEB_DEFAULT_MAX_TOKENS = 4096;
 const QWEN_CN_WEB_DEFAULT_COST = {
@@ -1007,7 +1007,7 @@ export async function buildQwenWebProvider(_params?: {
     models: [
       {
         id: "qwen3.5-plus",
-        name: "Qwen 3.5 Plus",
+        name: "Qwen3.5-Plus",
         reasoning: false,
         input: ["text"],
         cost: QWEN_WEB_DEFAULT_COST,
@@ -1015,8 +1015,17 @@ export async function buildQwenWebProvider(_params?: {
         maxTokens: QWEN_WEB_DEFAULT_MAX_TOKENS,
       },
       {
-        id: "qwen3.5-turbo",
-        name: "Qwen 3.5 Turbo",
+        id: "qwen3.5-Flash",
+        name: "Qwen3.5-Flash",
+        reasoning: false,
+        input: ["text"],
+        cost: QWEN_WEB_DEFAULT_COST,
+        contextWindow: QWEN_WEB_DEFAULT_CONTEXT_WINDOW,
+        maxTokens: QWEN_WEB_DEFAULT_MAX_TOKENS,
+      },
+      {
+        id: "qwen3.5-397B-A17B",
+        name: "Qwen3.5-397B-A17B",
         reasoning: false,
         input: ["text"],
         cost: QWEN_WEB_DEFAULT_COST,
@@ -1037,7 +1046,7 @@ export async function buildQwenCNWebProvider(_params?: {
     api: "qwen-cn-web",
     models: [
       {
-        id: "Qwen3.5-Plus",
+        id: "qwen3.5-plus",
         name: "Qwen 3.5 Plus (国内版)",
         reasoning: false,
         input: ["text"],

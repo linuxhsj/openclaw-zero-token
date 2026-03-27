@@ -483,8 +483,8 @@ export function createQwenCNWebStreamFn(cookieOrJson: string): StreamFn {
             }
 
             // Extract conversation ID
-            if (data.sessionId || data.sessionId) {
-              sessionMap.set(sessionKey, data.sessionId || data.sessionId);
+            if (data.communication.sessionid || data.sessionId) {
+              sessionMap.set(sessionKey, data.communication.sessionid || data.sessionId);
             }
 
             // Extract content delta - Qwen v2 uses choices[0].delta.content

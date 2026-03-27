@@ -276,7 +276,7 @@ export async function runOnboardWebAuth(): Promise<void> {
     "grok-web": ["grok-2"],
     "kimi-web": ["moonshot-v1-32k"],
     "perplexity-web": ["perplexity-web"],
-    "qwen-web": ["qwen-max"],
+    "qwen-web": ["qwen3.5-plus"],
     "qwen-cn-web": ["qwen-turbo"],
     "xiaomimo-web": ["xiaomimo-chat"],
   };
