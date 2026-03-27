@@ -271,7 +271,7 @@ export class QwenCNWebClientBrowser {
           const reqId = Array.from({ length: 32 }, () => Math.floor(Math.random() * 16).toString(16),).join('');
 
           const bodyObj: Record<string, unknown> = {
-            deep_search: '0',
+            deep_search: '1',
             req_id: reqId,
             model: model,
             scene: 'chat',
