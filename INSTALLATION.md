@@ -110,7 +110,7 @@ pnpm ui:build   # 构建 Web UI，访问 http://127.0.0.1:3001 时需要
 **验证编译成功**：
 
 ```bash
-ls dist/index.mjs
+ls dist/index.js
 ls dist/control-ui/index.html   # Web UI 资源
 # 应该看到文件存在
 ```
