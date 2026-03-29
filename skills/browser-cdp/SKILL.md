@@ -20,10 +20,16 @@ This skill provides browser automation via a lightweight HTTP proxy that wraps C
 
 ## Prerequisites
 
-A CDP proxy must be running on `http://localhost:3456`. Start it with:
+Install the required Python dependency:
 
 ```bash
-python3 {baseDir}/scripts/cdp_proxy.py
+pip install psutil
+```
+
+A CDP proxy must be running on `http://localhost:3456`. Start it from the repository root with:
+
+```bash
+python3 skills/browser-cdp/scripts/cdp_proxy.py
 ```
 
 This launches Chrome/Edge with remote debugging enabled and proxies CDP commands over HTTP.
@@ -157,7 +163,7 @@ curl -s "http://localhost:3456/navigate?url=https://chromewebstore.google.com/se
 # Extract extension IDs from search results
 curl -s -X POST http://localhost:3456/eval \
   -H "Content-Type: text/plain" \
-  -d "JSON.stringify([...document.querySelectorAll('a[data-id]')].map(a => ({id: a.dataset.id, title: a.textContent.trim()}))])"
+  -d "JSON.stringify([...document.querySelectorAll('a[data-id]')].map(a => ({id: a.dataset.id, title: a.textContent.trim()})))"
 
 # Install an extension (requires the extension ID)
 curl -s "http://localhost:3456/navigate?url=https://chromewebstore.google.com/detail/<extension-id>"
@@ -186,7 +192,7 @@ curl -s "http://localhost:3456/click?selector=%23login-form+%3E+button"
 ## Notes
 
 - The CDP proxy must be running before using any commands
-- If the proxy is not running, ask the user to start it: `python3 {baseDir}/scripts/cdp_proxy.py`
+- If the proxy is not running, ask the user to start it: `python3 skills/browser-cdp/scripts/cdp_proxy.py`
 - Use URL encoding for query parameters with special characters
 - The `/eval` endpoint returns the result of the last expression (like a REPL)
 - Screenshots are returned as PNG binary data

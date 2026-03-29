@@ -69,7 +69,7 @@ def find_chrome_path() -> Optional[str]:
                 timeout=5,
             )
             if proc.returncode == 0:
-                return path.strip()
+                return proc.stdout.strip()
         except (subprocess.TimeoutExpired, FileNotFoundError):
             continue
 
@@ -321,8 +321,15 @@ class CDPProxyHandler(BaseHTTPRequestHandler):
 
         try:
             resp = result.get("result", {})
-            inner = json.loads(resp.get("result", "{}"))
-            self._send_json({"result": inner.get("result", {}).get("value")})
+            inner = resp.get("result", {})
+            value = inner.get("value")
+            # If value is a JSON string (e.g. from JSON.stringify), parse it
+            if isinstance(value, str):
+                try:
+                    value = json.loads(value)
+                except json.JSONDecodeError:
+                    pass  # Return as plain string
+            self._send_json({"result": value})
         except Exception as e:
             self._send_json({"error": str(e)}, 500)
 
@@ -360,13 +367,19 @@ class CDPProxyHandler(BaseHTTPRequestHandler):
 
         try:
             resp = result.get("result", {})
-            inner = json.loads(resp.get("result", "{}"))
-            self._send_json(json.loads(inner.get("result", {}).get("value", "{}")))
+            inner = resp.get("result", {})
+            value = inner.get("value")
+            if isinstance(value, str):
+                try:
+                    value = json.loads(value)
+                except json.JSONDecodeError:
+                    pass
+            self._send_json(value)
         except Exception as e:
             self._send_json({"error": str(e)}, 500)
 
     def _handle_new_tab(self):
-        url = f"http://127.0.0.1:{self.server.debug_port}/json/new?about:blank"
+        url = f"http://127.0.0.1:{self.server.debug_port}/json/new?url=about:blank"
         try:
             with urllib.request.urlopen(url, timeout=10) as resp:
                 target = json.loads(resp.read().decode("utf-8"))
