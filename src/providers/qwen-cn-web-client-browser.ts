@@ -308,7 +308,7 @@ export class QwenCNWebClientBrowser {
             'x-platform': 'pc_tongyi',
             'x-chat-id': chatId || reqId,
             'origin': 'https://www.qianwen.com',
-            'referer': `${baseUrl} /chat/${sessionId} `,
+            'referer': `${baseUrl}/chat/${sessionId}`,
             'sec-ch-ua': '"Chromium";v="146", "Not-A.Brand";v="24", "Microsoft Edge";v="146"',
             'sec-ch-ua-mobile': '?0',
             'sec-ch-ua-platform': '"Windows"',
