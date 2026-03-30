@@ -46,7 +46,7 @@ export class QwenWebClientBrowser {
   private async ensureBrowser() {
     if (this.browser && this.page) {
       const pages = this.browser.pages();
-      let qwenPage = pages.find((p: Page) => p.url().includes("qwen.ai"));
+      let qwenPage = pages.find((p: Page) => p.url().includes("chat.qwen.ai"));
 
       if (qwenPage) {
         console.log(`[Qwen Web Browser] Found existing Qwen page`);
@@ -123,7 +123,7 @@ export class QwenWebClientBrowser {
     }
 
     const pages = this.browser.pages();
-    let qwenPage = pages.find((p: Page) => p.url().includes("qwen.ai"));
+    let qwenPage = pages.find((p: Page) => p.url().includes("chat.qwen.ai"));
 
     if (qwenPage) {
       console.log(`[Qwen Web Browser] Found existing Qwen page`);
