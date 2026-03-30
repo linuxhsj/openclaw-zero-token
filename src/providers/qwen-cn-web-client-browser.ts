@@ -128,9 +128,14 @@ export class QwenCNWebClientBrowser {
         );
       }
 
-      this.browser = (await chromium.connectOverCDP(wsUrl, {
+      const cdpBrowser = await chromium.connectOverCDP(wsUrl, {
         headers: getHeadersWithAuth(wsUrl),
-      })).contexts()[0];
+      });
+      const contexts = cdpBrowser.contexts();
+      if (contexts.length === 0) {
+        throw new Error("No browser context available after CDP connection");
+      }
+      this.browser = contexts[0];
 
 
       console.log(`[Qwen CN Web Browser] Connected successfully`);
