@@ -437,8 +437,9 @@ export function createQwenWebStreamFn(cookieOrJson: string): StreamFn {
             const data = JSON.parse(dataStr);
 
             // Extract conversation ID
-            if (data.sessionId || data.conversationId || data["response.created"].chat_id) {
-              conversationMap.set(sessionKey, data.sessionId || data.conversationId || data["response.created"].chat_id);
+            const chatId = data["response.created"]?.chat_id;
+            if (data.sessionId || data.conversationId || chatId) {
+              conversationMap.set(sessionKey, data.sessionId || data.conversationId || chatId);
             }
 
             // Extract content delta - Qwen v2 uses choices[0].delta.content
