@@ -391,6 +391,46 @@ node openclaw.mjs tui
 
 The wizard will create all required directories and basic files.
 
+### ⚠️ CRITICAL: Tools not working after update
+
+If the AI says "file tools aren't responding" or "can't read files":
+
+1. **Check tool call format in system prompt:**
+
+   ```bash
+   grep "Tool Call Format" src/agents/system-prompt.ts
+   ```
+
+   If no output, the section is missing. Add this after `## Tool Call Style`:
+
+   ```
+   "## Tool Call Format",
+   "You MUST use EXACT XML format to call tools.",
+   '<tool_call id="call_001" name="read">',
+   '{"file_path":"/path/to/file.txt"}',
+   ```
+
+   Then rebuild: `pnpm canvas:a2ui:bundle && node scripts/tsdown-build.mjs`
+
+2. **Verify tools are actually being called:**
+   ```bash
+   journalctl -u openclaw-zero-token.service -f | grep "Stream completed"
+   ```
+   If you see `Tools: 0`, the format section is missing. Should be `Tools: 25` (or similar).
+
+### ⚠️ CRITICAL: Two Config Directories
+
+This fork has TWO state directories. `server.sh` reads from `.openclaw-upstream-state/` but you
+maintain config in `.openclaw-zero-state/`. If out of sync, gateway runs on minimal defaults:
+
+```bash
+# ALWAYS sync before restart:
+cp .openclaw-zero-state/openclaw.json .openclaw-upstream-state/openclaw.json
+cp .openclaw-zero-state/agents/main/agent/auth-profiles.json .openclaw-upstream-state/agents/main/agent/
+cp .openclaw-zero-state/agents/main/agent/auth.json .openclaw-upstream-state/agents/main/agent/
+systemctl restart openclaw-zero-token.service
+```
+
 ### Fix issues: doctor command
 
 If you already ran the project but see missing-directories or similar errors:

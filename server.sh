@@ -103,6 +103,27 @@ if [ ! -f "$CONFIG_FILE" ]; then
   fi
 fi
 
+# ─── CRITICAL: Sync config and auth from .openclaw-zero-state (canonical source) ───
+ZERO_STATE_DIR="$SCRIPT_DIR/.openclaw-zero-state"
+if [ -d "$ZERO_STATE_DIR" ] && [ -f "$ZERO_STATE_DIR/openclaw.json" ]; then
+  # Only sync if zero-state config is newer than upstream-state config
+  if [ "$ZERO_STATE_DIR/openclaw.json" -nt "$CONFIG_FILE" ]; then
+    cp "$ZERO_STATE_DIR/openclaw.json" "$CONFIG_FILE"
+    echo "已同步配置: $ZERO_STATE_DIR/openclaw.json -> $CONFIG_FILE"
+  fi
+  # Always sync auth files if they exist in zero-state
+  if [ -f "$ZERO_STATE_DIR/agents/main/agent/auth-profiles.json" ]; then
+    mkdir -p "$STATE_DIR/agents/main/agent"
+    cp "$ZERO_STATE_DIR/agents/main/agent/auth-profiles.json" "$STATE_DIR/agents/main/agent/auth-profiles.json" 2>/dev/null
+    echo "已同步 auth-profiles.json"
+  fi
+  if [ -f "$ZERO_STATE_DIR/agents/main/agent/auth.json" ]; then
+    mkdir -p "$STATE_DIR/agents/main/agent"
+    cp "$ZERO_STATE_DIR/agents/main/agent/auth.json" "$STATE_DIR/agents/main/agent/auth.json" 2>/dev/null
+    echo "已同步 auth.json"
+  fi
+fi
+
 # 从配置文件动态读取 token，回退到环境变量
 GATEWAY_TOKEN=$(jq -r '.gateway.auth.token // empty' "$CONFIG_FILE" 2>/dev/null)
 if [ -z "$GATEWAY_TOKEN" ]; then
@@ -147,6 +168,7 @@ start_gateway() {
 
   nohup "$NODE" "$SCRIPT_DIR/openclaw.mjs" gateway --port "$PORT" > "$TMP_LOG" 2>&1 &
   GATEWAY_PID=$!
+  disown "$GATEWAY_PID" 2>/dev/null
   echo "$GATEWAY_PID" > "$PID_FILE"
 
   echo "等待 Gateway 就绪..."
