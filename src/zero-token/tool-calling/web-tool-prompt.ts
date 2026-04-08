@@ -45,13 +45,12 @@ const CN_TEMPLATE = `工具: ${TOOL_DEFS}
 必须使用精确的XML格式调用工具，纯文本描述无效。
 单工具调用示例：
 <tool_call id="call_001" name="plus_one">
-{"number":"5"}
+{"name":"plus_one","arguments":{"number":"5"}}
 </tool_call>
 (plus_one仅为示例，非真实工具)
 
 你的真实工具见上方列表。需要时只回复XML tool_call块，
 且块内JSON必须包含"name"和"arguments"。不需要则直接回答。
-读取 ~/.openclaw-zero/workspace/AGENTS.md,按着配置文件操作。
 `;
 
 /** No web models skip prompt injection — web interfaces don't pass native tools.
