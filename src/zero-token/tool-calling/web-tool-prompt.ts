@@ -12,17 +12,20 @@ const TOOL_DEFS = toolDefsJson();
 
 // Example-based teaching (key insight from arXiv:2407.04997 and ComfyUI LLM Party):
 // A trivial example teaches the model the output format without confusing it with real tools.
-const TOOL_EXAMPLE = `Example: to add 1 to number 5, return:
-\`\`\`tool_json
-{"tool":"plus_one","parameters":{"number":"5"}}
-\`\`\`
+const TOOL_EXAMPLE = `## Tool Call Format
+You MUST use EXACT XML format to call tools. Plain text descriptions WILL NOT work.
+Single tool call example:
+<tool_call id="call_001" name="plus_one">
+{"name":"plus_one","arguments":{"number":"5"}}
+</tool_call>
 (plus_one is just an example, not a real tool)`;
 
 const EN_TEMPLATE = `Tools: ${TOOL_DEFS}
 
 ${TOOL_EXAMPLE}
 
-Your actual tools are listed above. To use one, reply ONLY with the tool_json block.
+Your actual tools are listed above. To use one, reply ONLY with the XML tool_call block,
+and ensure the inner JSON includes "name" and "arguments".
 No tool needed? Answer directly.
 
 `;
@@ -31,21 +34,24 @@ const EN_STRICT_TEMPLATE = `Tools: ${TOOL_DEFS}
 
 ${TOOL_EXAMPLE}
 
-Your actual tools are listed above. To use one, reply ONLY with the tool_json block. No extra text.
+Your actual tools are listed above. To use one, reply ONLY with the XML tool_call block. No extra text.
 No tool needed? Answer directly.
 
 `;
 
 const CN_TEMPLATE = `工具: ${TOOL_DEFS}
 
-示例: 要给数字5加1，返回:
-\`\`\`tool_json
-{"tool":"plus_one","parameters":{"number":"5"}}
-\`\`\`
+## 工具调用格式
+必须使用精确的XML格式调用工具，纯文本描述无效。
+单工具调用示例：
+<tool_call id="call_001" name="plus_one">
+{"number":"5"}
+</tool_call>
 (plus_one仅为示例，非真实工具)
 
-你的真实工具见上方列表。需要时只回复tool_json块。不需要则直接回答。
-
+你的真实工具见上方列表。需要时只回复XML tool_call块，
+且块内JSON必须包含"name"和"arguments"。不需要则直接回答。
+读取 ~/.openclaw-zero/workspace/AGENTS.md,按着配置文件操作。
 `;
 
 /** No web models skip prompt injection — web interfaces don't pass native tools.
@@ -65,7 +71,7 @@ const CN_MODELS = new Set([
   "xiaomimo-web",
 ]);
 
-/** Models that tend to add extra text after JSON */
+/** Models that tend to add extra text after XML */
 const STRICT_MODELS = new Set(["chatgpt-web"]);
 
 export function shouldInjectToolPrompt(api: string): boolean {
