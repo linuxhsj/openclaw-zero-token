@@ -25,13 +25,13 @@ jobs:
       pull-requests: write
     runs-on: blacksmith-16vcpu-ubuntu-2404
     steps:
-      - uses: actions/create-github-app-token@f8d387b68d61c58ab83c6c016672934102569859 # v3.0.0
+      - uses: actions/create-github-app-token@1b10c78c7865c340bc4f6099eb2f838309f1e8c3 # v3.1.1
         id: app-token
         continue-on-error: true
         with:
           app-id: "2729701"
           private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-      - uses: actions/create-github-app-token@f8d387b68d61c58ab83c6c016672934102569859 # v3.0.0
+      - uses: actions/create-github-app-token@1b10c78c7865c340bc4f6099eb2f838309f1e8c3 # v3.1.1
         id: app-token-fallback
         if: steps.app-token.outcome == 'failure'
         with:
@@ -381,13 +381,13 @@ jobs:
       pull-requests: write
     runs-on: blacksmith-16vcpu-ubuntu-2404
     steps:
-      - uses: actions/create-github-app-token@f8d387b68d61c58ab83c6c016672934102569859 # v3.0.0
+      - uses: actions/create-github-app-token@1b10c78c7865c340bc4f6099eb2f838309f1e8c3 # v3.1.1
         id: app-token
         continue-on-error: true
         with:
           app-id: "2729701"
           private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-      - uses: actions/create-github-app-token@f8d387b68d61c58ab83c6c016672934102569859 # v3.0.0
+      - uses: actions/create-github-app-token@1b10c78c7865c340bc4f6099eb2f838309f1e8c3 # v3.1.1
         id: app-token-fallback
         if: steps.app-token.outcome == 'failure'
         with:
@@ -629,13 +629,13 @@ jobs:
       issues: write
     runs-on: blacksmith-16vcpu-ubuntu-2404
     steps:
-      - uses: actions/create-github-app-token@f8d387b68d61c58ab83c6c016672934102569859 # v3.0.0
+      - uses: actions/create-github-app-token@1b10c78c7865c340bc4f6099eb2f838309f1e8c3 # v3.1.1
         id: app-token
         continue-on-error: true
         with:
           app-id: "2729701"
           private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-      - uses: actions/create-github-app-token@f8d387b68d61c58ab83c6c016672934102569859 # v3.0.0
+      - uses: actions/create-github-app-token@1b10c78c7865c340bc4f6099eb2f838309f1e8c3 # v3.1.1
         id: app-token-fallback
         if: steps.app-token.outcome == 'failure'
         with:
