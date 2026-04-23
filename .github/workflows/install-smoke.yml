@@ -46,7 +46,7 @@ jobs:
       # Blacksmith can fall back to the local docker driver, which rejects gha
       # cache export/import. Keep smoke builds driver-agnostic.
       - name: Build root Dockerfile smoke image
-        uses: useblacksmith/build-push-action@v2
+        uses: useblacksmith/build-push-action@v2.1.0
         with:
           context: .
           file: ./Dockerfile
@@ -63,7 +63,7 @@ jobs:
       # extension deps without breaking image build or basic CLI startup. It
       # does not exercise runtime loading/registration of diagnostics-otel.
       - name: Build extension Dockerfile smoke image
-        uses: useblacksmith/build-push-action@v2
+        uses: useblacksmith/build-push-action@v2.1.0
         with:
           context: .
           file: ./Dockerfile
@@ -79,7 +79,7 @@ jobs:
           docker run --rm --entrypoint sh openclaw-ext-smoke:local -lc 'which openclaw && openclaw --version'
 
       - name: Build installer smoke image
-        uses: useblacksmith/build-push-action@v2
+        uses: useblacksmith/build-push-action@v2.1.0
         with:
           context: ./scripts/docker
           file: ./scripts/docker/install-sh-smoke/Dockerfile
@@ -90,7 +90,7 @@ jobs:
 
       - name: Build installer non-root image
         if: github.event_name != 'pull_request'
-        uses: useblacksmith/build-push-action@v2
+        uses: useblacksmith/build-push-action@v2.1.0
         with:
           context: ./scripts/docker
           file: ./scripts/docker/install-sh-nonroot/Dockerfile
