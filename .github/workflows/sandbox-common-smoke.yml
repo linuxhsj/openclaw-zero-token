@@ -27,7 +27,7 @@ jobs:
           submodules: false
 
       - name: Set up Docker Builder
-        uses: useblacksmith/setup-docker-builder@v1
+        uses: useblacksmith/setup-docker-builder@v1.7.0
 
       - name: Build minimal sandbox base (USER sandbox)
         shell: bash
