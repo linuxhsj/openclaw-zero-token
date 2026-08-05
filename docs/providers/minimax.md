@@ -19,11 +19,10 @@ Official references:
 
 ## Model catalog
 
-| Model ID                 |                          Context window | OpenClaw input declaration | Thinking behavior                  |
-| ------------------------ | --------------------------------------: | -------------------------- | ---------------------------------- |
-| `MiniMax-M3`             | 1,000,000 total input and output tokens | Text and image             | Supports `adaptive` and `disabled` |
-| `MiniMax-M2.7`           |   204,800 total input and output tokens | Text                       | Always on                          |
-| `MiniMax-M2.7-highspeed` |   204,800 total input and output tokens | Text                       | Always on                          |
+| Model ID       |                          Context window | OpenClaw input declaration | Thinking behavior                  |
+| -------------- | --------------------------------------: | -------------------------- | ---------------------------------- |
+| `MiniMax-M3`   | 1,000,000 total input and output tokens | Text and image             | Supports `adaptive` and `disabled` |
+| `MiniMax-M2.7` |   204,800 total input and output tokens | Text                       | Always on                          |
 
 The upstream M3 APIs also accept video content blocks. OpenClaw's current model input
 declaration represents text and image inputs, which are the modalities the agent runtime
@@ -86,7 +85,7 @@ The global Anthropic-compatible configuration is:
             name: "MiniMax M3",
             reasoning: true,
             input: ["text", "image"],
-            cost: { input: 0.3, output: 1.2, cacheRead: 0.06, cacheWrite: 0 },
+            cost: { input: 0.6, output: 2.4, cacheRead: 0.12, cacheWrite: 0 },
             contextWindow: 1000000,
             maxTokens: 131072,
           },
@@ -139,21 +138,15 @@ OpenAI client appends `/chat/completions` to the `/v1` Base URL.
 
 ## Pricing
 
-Catalog costs are USD per million tokens. M3 has input-length and service-tier pricing,
-so preserve all applicable tiers when estimating an actual request:
+Catalog costs are USD per million tokens:
 
-| Model and service tier | Input length                | Input | Output | Cache read | Cache write |
-| ---------------------- | --------------------------- | ----: | -----: | ---------: | ----------: |
-| M3 standard            | Up to 512K input tokens     | $0.30 |  $1.20 |      $0.06 |  Not listed |
-| M3 standard            | More than 512K input tokens | $0.60 |  $2.40 |      $0.12 |  Not listed |
-| M3 priority            | Up to 512K input tokens     | $0.45 |  $1.80 |      $0.09 |  Not listed |
-| M3 priority            | More than 512K input tokens | $0.90 |  $3.60 |      $0.18 |  Not listed |
-| M2.7 standard          | Up to its context limit     | $0.30 |  $1.20 |      $0.06 |      $0.375 |
+| Model        | Input | Output | Cache read | Cache write |
+| ------------ | ----: | -----: | ---------: | ----------: |
+| MiniMax M3   | $0.60 |  $2.40 |      $0.12 |  Not listed |
+| MiniMax M2.7 | $0.30 |  $1.20 |      $0.06 |      $0.375 |
 
-The flat M3 catalog cost uses the default standard tier for requests up to 512K input
-tokens. Its `cacheWrite` value is `0` because the official M3 pricing table does not list a
-prompt-cache write charge. Requests above 512K input tokens or requests using
-`service_tier: "priority"` are billed at the corresponding table row.
+The M3 catalog uses `cacheWrite: 0` because the model schema requires a numeric value and
+the official pricing does not list a prompt-cache write charge.
 
 ## Troubleshooting
 
@@ -164,7 +157,6 @@ profile. Model IDs are case-sensitive:
 
 - `minimax/MiniMax-M3`
 - `minimax/MiniMax-M2.7`
-- `minimax/MiniMax-M2.7-highspeed`
 
 Then run:
 

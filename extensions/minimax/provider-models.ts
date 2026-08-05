@@ -4,11 +4,7 @@ import { matchesExactOrPrefix } from "openclaw/plugin-sdk/provider-model-shared"
 export const MINIMAX_DEFAULT_MODEL_ID = "MiniMax-M3";
 export const MINIMAX_DEFAULT_MODEL_REF = `minimax/${MINIMAX_DEFAULT_MODEL_ID}`;
 
-export const MINIMAX_TEXT_MODEL_ORDER = [
-  "MiniMax-M3",
-  "MiniMax-M2.7",
-  "MiniMax-M2.7-highspeed",
-] as const;
+export const MINIMAX_TEXT_MODEL_ORDER = ["MiniMax-M3", "MiniMax-M2.7"] as const;
 
 type MinimaxModelCatalogEntry = Pick<
   ModelDefinitionConfig,
@@ -20,20 +16,12 @@ export const MINIMAX_TEXT_MODEL_CATALOG = {
     name: "MiniMax M3",
     reasoning: true,
     input: ["text", "image"],
-    cost: { input: 0.3, output: 1.2, cacheRead: 0.06, cacheWrite: 0 },
+    cost: { input: 0.6, output: 2.4, cacheRead: 0.12, cacheWrite: 0 },
     contextWindow: 1_000_000,
     maxTokens: 131_072,
   },
   "MiniMax-M2.7": {
     name: "MiniMax M2.7",
-    reasoning: true,
-    input: ["text"],
-    cost: { input: 0.3, output: 1.2, cacheRead: 0.06, cacheWrite: 0.375 },
-    contextWindow: 204_800,
-    maxTokens: 131_072,
-  },
-  "MiniMax-M2.7-highspeed": {
-    name: "MiniMax M2.7 Highspeed",
     reasoning: true,
     input: ["text"],
     cost: { input: 0.3, output: 1.2, cacheRead: 0.06, cacheWrite: 0.375 },

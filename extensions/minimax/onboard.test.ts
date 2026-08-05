@@ -135,10 +135,8 @@ describe("minimax onboard", () => {
   });
 
   it("sets the chosen model as primary in config mode", () => {
-    const cfg = applyMinimaxApiConfig({}, "MiniMax-M2.7-highspeed");
-    expect(resolveAgentModelPrimaryValue(cfg.agents?.defaults?.model)).toBe(
-      "minimax/MiniMax-M2.7-highspeed",
-    );
+    const cfg = applyMinimaxApiConfig({}, "MiniMax-M2.7");
+    expect(resolveAgentModelPrimaryValue(cfg.agents?.defaults?.model)).toBe("minimax/MiniMax-M2.7");
   });
 
   it("preserves existing model fallbacks", () => {
