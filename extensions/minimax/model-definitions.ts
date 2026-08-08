@@ -6,15 +6,11 @@ export const MINIMAX_API_BASE_URL = "https://api.minimax.io/anthropic";
 export const MINIMAX_CN_API_BASE_URL = "https://api.minimaxi.com/anthropic";
 export const MINIMAX_HOSTED_MODEL_ID = MINIMAX_DEFAULT_MODEL_ID;
 export const MINIMAX_HOSTED_MODEL_REF = `minimax/${MINIMAX_HOSTED_MODEL_ID}`;
-export const DEFAULT_MINIMAX_CONTEXT_WINDOW = 204800;
-export const DEFAULT_MINIMAX_MAX_TOKENS = 131072;
+const DEFAULT_MINIMAX_MODEL = MINIMAX_TEXT_MODEL_CATALOG[MINIMAX_DEFAULT_MODEL_ID];
+export const DEFAULT_MINIMAX_CONTEXT_WINDOW = DEFAULT_MINIMAX_MODEL.contextWindow;
+export const DEFAULT_MINIMAX_MAX_TOKENS = DEFAULT_MINIMAX_MODEL.maxTokens;
 
-export const MINIMAX_API_COST = {
-  input: 0.3,
-  output: 1.2,
-  cacheRead: 0.06,
-  cacheWrite: 0.375,
-};
+export const MINIMAX_API_COST = { ...DEFAULT_MINIMAX_MODEL.cost };
 export const MINIMAX_HOSTED_COST = {
   input: 0,
   output: 0,
@@ -34,6 +30,7 @@ export function buildMinimaxModelDefinition(params: {
   id: string;
   name?: string;
   reasoning?: boolean;
+  input?: ModelDefinitionConfig["input"];
   cost: ModelDefinitionConfig["cost"];
   contextWindow: number;
   maxTokens: number;
@@ -43,18 +40,22 @@ export function buildMinimaxModelDefinition(params: {
     id: params.id,
     name: params.name ?? catalog?.name ?? `MiniMax ${params.id}`,
     reasoning: params.reasoning ?? catalog?.reasoning ?? false,
-    input: ["text"],
-    cost: params.cost,
+    input: [...(params.input ?? catalog?.input ?? ["text"])],
+    cost: { ...params.cost },
     contextWindow: params.contextWindow,
     maxTokens: params.maxTokens,
   };
 }
 
 export function buildMinimaxApiModelDefinition(modelId: string): ModelDefinitionConfig {
+  const catalog = MINIMAX_TEXT_MODEL_CATALOG[modelId as MinimaxCatalogId];
   return buildMinimaxModelDefinition({
     id: modelId,
-    cost: MINIMAX_API_COST,
-    contextWindow: DEFAULT_MINIMAX_CONTEXT_WINDOW,
-    maxTokens: DEFAULT_MINIMAX_MAX_TOKENS,
+    name: catalog?.name,
+    reasoning: catalog?.reasoning,
+    input: catalog?.input,
+    cost: catalog?.cost ?? MINIMAX_API_COST,
+    contextWindow: catalog?.contextWindow ?? DEFAULT_MINIMAX_CONTEXT_WINDOW,
+    maxTokens: catalog?.maxTokens ?? DEFAULT_MINIMAX_MAX_TOKENS,
   });
 }

@@ -1,73 +1,76 @@
 ---
-summary: "Use MiniMax M2.5 in OpenClaw"
+summary: "Use MiniMax M3 and M2.7 in OpenClaw"
 read_when:
   - You want MiniMax models in OpenClaw
-  - You need MiniMax setup guidance
+  - You need MiniMax setup or endpoint guidance
 title: "MiniMax"
 ---
 
 # MiniMax
 
-MiniMax is an AI company that builds the **M2/M2.5** model family. The current
-coding-focused release is **MiniMax M2.5** (December 23, 2025), built for
-real-world complex tasks.
+OpenClaw includes a bundled MiniMax provider for API-key and Token Plan OAuth setup.
+MiniMax M3 is the default model, while MiniMax M2.7 remains available for existing
+text-only workflows.
 
-Source: [MiniMax M2.5 release note](https://www.minimax.io/news/minimax-m25)
+Official references:
 
-## Model overview (M2.5)
+- [Model invocation](https://platform.minimax.io/docs/guides/text-generation)
+- [Pay-as-you-go pricing](https://platform.minimax.io/docs/guides/pricing-paygo)
 
-MiniMax highlights these improvements in M2.5:
+## Model catalog
 
-- Stronger **multi-language coding** (Rust, Java, Go, C++, Kotlin, Objective-C, TS/JS).
-- Better **web/app development** and aesthetic output quality (including native mobile).
-- Improved **composite instruction** handling for office-style workflows, building on
-  interleaved thinking and integrated constraint execution.
-- **More concise responses** with lower token usage and faster iteration loops.
-- Stronger **tool/agent framework** compatibility and context management (Claude Code,
-  Droid/Factory AI, Cline, Kilo Code, Roo Code, BlackBox).
-- Higher-quality **dialogue and technical writing** outputs.
+| Model ID       |                          Context window | OpenClaw input declaration | Thinking behavior                  |
+| -------------- | --------------------------------------: | -------------------------- | ---------------------------------- |
+| `MiniMax-M3`   | 1,000,000 total input and output tokens | Text and image             | Supports `adaptive` and `disabled` |
+| `MiniMax-M2.7` |   204,800 total input and output tokens | Text                       | Always on                          |
 
-## MiniMax M2.5 vs MiniMax M2.5 Highspeed
+The upstream M3 APIs also accept video content blocks. OpenClaw's current model input
+declaration represents text and image inputs, which are the modalities the agent runtime
+can pass directly to this provider.
 
-- **Speed:** `MiniMax-M2.5-highspeed` is the official fast tier in MiniMax docs.
-- **Cost:** MiniMax pricing lists the same input cost and a higher output cost for highspeed.
-- **Current model IDs:** use `MiniMax-M2.5` or `MiniMax-M2.5-highspeed`.
+M3 thinking defaults depend on the selected protocol. The Anthropic-compatible API leaves
+thinking off when the parameter is omitted; the OpenAI-compatible API leaves it on. M2.7
+thinking cannot be disabled. OpenClaw normalizes enabled M3 thinking requests to
+`{"type":"adaptive"}` for the Anthropic-compatible API.
 
-## Choose a setup
+## Configure with the wizard
 
-### MiniMax OAuth (Coding Plan) — recommended
-
-**Best for:** quick setup with MiniMax Coding Plan via OAuth, no API key required.
-
-Enable the bundled OAuth plugin and authenticate:
+For a global API key:
 
 ```bash
-openclaw plugins enable minimax-portal-auth  # skip if already loaded.
-openclaw gateway restart  # restart if gateway is already running
-openclaw onboard --auth-choice minimax-portal
+openclaw setup --wizard --auth-choice minimax-global-api
 ```
 
-You will be prompted to select an endpoint:
+For a CN API key:
 
-- **Global** - International users (`api.minimax.io`)
-- **CN** - Users in China (`api.minimaxi.com`)
+```bash
+openclaw setup --wizard --auth-choice minimax-cn-api
+```
 
-See [MiniMax OAuth plugin README](https://github.com/openclaw/openclaw/tree/main/extensions/minimax-portal-auth) for details.
+For Token Plan OAuth:
 
-### MiniMax M2.5 (API key)
+```bash
+openclaw models auth login --provider minimax-portal --set-default
+```
 
-**Best for:** hosted MiniMax with Anthropic-compatible API.
+The wizard uses MiniMax M3 and the Anthropic-compatible endpoint for the selected region.
 
-Configure via CLI:
+## Manual API-key configuration
 
-- Run `openclaw configure`
-- Select **Model/auth**
-- Choose **MiniMax M2.5**
+The global Anthropic-compatible configuration is:
 
 ```json5
 {
   env: { MINIMAX_API_KEY: "sk-..." },
-  agents: { defaults: { model: { primary: "minimax/MiniMax-M2.5" } } },
+  agents: {
+    defaults: {
+      model: { primary: "minimax/MiniMax-M3" },
+      models: {
+        "minimax/MiniMax-M3": { alias: "minimax" },
+        "minimax/MiniMax-M2.7": { alias: "minimax-m2.7" },
+      },
+    },
+  },
   models: {
     mode: "merge",
     providers: {
@@ -75,24 +78,25 @@ Configure via CLI:
         baseUrl: "https://api.minimax.io/anthropic",
         apiKey: "${MINIMAX_API_KEY}",
         api: "anthropic-messages",
+        authHeader: true,
         models: [
           {
-            id: "MiniMax-M2.5",
-            name: "MiniMax M2.5",
+            id: "MiniMax-M3",
+            name: "MiniMax M3",
             reasoning: true,
-            input: ["text"],
-            cost: { input: 0.3, output: 1.2, cacheRead: 0.03, cacheWrite: 0.12 },
-            contextWindow: 200000,
-            maxTokens: 8192,
+            input: ["text", "image"],
+            cost: { input: 0.6, output: 2.4, cacheRead: 0.12, cacheWrite: 0 },
+            contextWindow: 1000000,
+            maxTokens: 131072,
           },
           {
-            id: "MiniMax-M2.5-highspeed",
-            name: "MiniMax M2.5 Highspeed",
+            id: "MiniMax-M2.7",
+            name: "MiniMax M2.7",
             reasoning: true,
             input: ["text"],
-            cost: { input: 0.3, output: 1.2, cacheRead: 0.03, cacheWrite: 0.12 },
-            contextWindow: 200000,
-            maxTokens: 8192,
+            cost: { input: 0.3, output: 1.2, cacheRead: 0.06, cacheWrite: 0.375 },
+            contextWindow: 204800,
+            maxTokens: 131072,
           },
         ],
       },
@@ -101,116 +105,60 @@ Configure via CLI:
 }
 ```
 
-### MiniMax M2.5 as fallback (example)
+## Region and protocol endpoints
 
-**Best for:** keep your strongest latest-generation model as primary, fail over to MiniMax M2.5.
-Example below uses Opus as a concrete primary; swap to your preferred latest-gen primary model.
+OpenClaw stores one `baseUrl` and one `api` value per provider entry. Use one matching pair
+from this table; no additional endpoint fields are required.
 
-```json5
-{
-  env: { MINIMAX_API_KEY: "sk-..." },
-  agents: {
-    defaults: {
-      models: {
-        "anthropic/claude-opus-4-6": { alias: "primary" },
-        "minimax/MiniMax-M2.5": { alias: "minimax" },
-      },
-      model: {
-        primary: "anthropic/claude-opus-4-6",
-        fallbacks: ["minimax/MiniMax-M2.5"],
-      },
-    },
-  },
-}
-```
+| Region | Protocol             | `baseUrl`                            | `api`                |
+| ------ | -------------------- | ------------------------------------ | -------------------- |
+| Global | Anthropic-compatible | `https://api.minimax.io/anthropic`   | `anthropic-messages` |
+| Global | OpenAI-compatible    | `https://api.minimax.io/v1`          | `openai-completions` |
+| CN     | Anthropic-compatible | `https://api.minimaxi.com/anthropic` | `anthropic-messages` |
+| CN     | OpenAI-compatible    | `https://api.minimaxi.com/v1`        | `openai-completions` |
 
-### Optional: Local via LM Studio (manual)
-
-**Best for:** local inference with LM Studio.
-We have seen strong results with MiniMax M2.5 on powerful hardware (e.g. a
-desktop/server) using LM Studio's local server.
-
-Configure manually via `openclaw.json`:
+For an OpenAI-compatible CN override:
 
 ```json5
 {
-  agents: {
-    defaults: {
-      model: { primary: "lmstudio/minimax-m2.5-gs32" },
-      models: { "lmstudio/minimax-m2.5-gs32": { alias: "Minimax" } },
-    },
-  },
   models: {
-    mode: "merge",
     providers: {
-      lmstudio: {
-        baseUrl: "http://127.0.0.1:1234/v1",
-        apiKey: "lmstudio",
-        api: "openai-responses",
-        models: [
-          {
-            id: "minimax-m2.5-gs32",
-            name: "MiniMax M2.5 GS32",
-            reasoning: false,
-            input: ["text"],
-            cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
-            contextWindow: 196608,
-            maxTokens: 8192,
-          },
-        ],
+      minimax: {
+        baseUrl: "https://api.minimaxi.com/v1",
+        api: "openai-completions",
       },
     },
   },
 }
 ```
 
-## Configure via `openclaw configure`
+Keep Anthropic Base URLs ending in `/anthropic`. The Anthropic SDK appends
+`/v1/messages`; adding `/v1` to the configured Base URL would duplicate that path. The
+OpenAI client appends `/chat/completions` to the `/v1` Base URL.
 
-Use the interactive config wizard to set MiniMax without editing JSON:
+## Pricing
 
-1. Run `openclaw configure`.
-2. Select **Model/auth**.
-3. Choose **MiniMax M2.5**.
-4. Pick your default model when prompted.
+Catalog costs are USD per million tokens:
 
-## Configuration options
+| Model        | Input | Output | Cache read | Cache write |
+| ------------ | ----: | -----: | ---------: | ----------: |
+| MiniMax M3   | $0.60 |  $2.40 |      $0.12 |  Not listed |
+| MiniMax M2.7 | $0.30 |  $1.20 |      $0.06 |      $0.375 |
 
-- `models.providers.minimax.baseUrl`: prefer `https://api.minimax.io/anthropic` (Anthropic-compatible); `https://api.minimax.io/v1` is optional for OpenAI-compatible payloads.
-- `models.providers.minimax.api`: prefer `anthropic-messages`; `openai-completions` is optional for OpenAI-compatible payloads.
-- `models.providers.minimax.apiKey`: MiniMax API key (`MINIMAX_API_KEY`).
-- `models.providers.minimax.models`: define `id`, `name`, `reasoning`, `contextWindow`, `maxTokens`, `cost`.
-- `agents.defaults.models`: alias models you want in the allowlist.
-- `models.mode`: keep `merge` if you want to add MiniMax alongside built-ins.
-
-## Notes
-
-- Model refs are `minimax/<model>`.
-- Recommended model IDs: `MiniMax-M2.5` and `MiniMax-M2.5-highspeed`.
-- Coding Plan usage API: `https://api.minimaxi.com/v1/api/openplatform/coding_plan/remains` (requires a coding plan key).
-- Update pricing values in `models.json` if you need exact cost tracking.
-- Referral link for MiniMax Coding Plan (10% off): [https://platform.minimax.io/subscribe/coding-plan?code=DbXJTRClnb&source=link](https://platform.minimax.io/subscribe/coding-plan?code=DbXJTRClnb&source=link)
-- See [/concepts/model-providers](/concepts/model-providers) for provider rules.
-- Use `openclaw models list` and `openclaw models set minimax/MiniMax-M2.5` to switch.
+The M3 catalog uses `cacheWrite: 0` because the model schema requires a numeric value and
+the official pricing does not list a prompt-cache write charge.
 
 ## Troubleshooting
 
-### “Unknown model: minimax/MiniMax-M2.5”
+### Unknown model: minimax/MiniMax-M3
 
-This usually means the **MiniMax provider isn’t configured** (no provider entry
-and no MiniMax auth profile/env key found). A fix for this detection is in
-**2026.1.12** (unreleased at the time of writing). Fix by:
+Confirm that the provider is configured through the wizard, JSON, or a MiniMax auth
+profile. Model IDs are case-sensitive:
 
-- Upgrading to **2026.1.12** (or run from source `main`), then restarting the gateway.
-- Running `openclaw configure` and selecting **MiniMax M2.5**, or
-- Adding the `models.providers.minimax` block manually, or
-- Setting `MINIMAX_API_KEY` (or a MiniMax auth profile) so the provider can be injected.
+- `minimax/MiniMax-M3`
+- `minimax/MiniMax-M2.7`
 
-Make sure the model id is **case‑sensitive**:
-
-- `minimax/MiniMax-M2.5`
-- `minimax/MiniMax-M2.5-highspeed`
-
-Then recheck with:
+Then run:
 
 ```bash
 openclaw models list

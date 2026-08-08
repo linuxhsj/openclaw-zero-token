@@ -20,7 +20,11 @@ import {
 import { createBedrockNoCacheWrapper, isAnthropicBedrockModel } from "./bedrock-stream-wrappers.js";
 import { createGoogleThinkingPayloadWrapper } from "./google-stream-wrappers.js";
 import { log } from "./logger.js";
-import { createMinimaxFastModeWrapper } from "./minimax-stream-wrappers.js";
+import {
+  createMinimaxFastModeWrapper,
+  createMinimaxM3ThinkingWrapper,
+  shouldApplyMinimaxM3ThinkingCompat,
+} from "./minimax-stream-wrappers.js";
 import {
   createMoonshotThinkingWrapper,
   resolveMoonshotThinkingType,
@@ -363,6 +367,15 @@ function applyPostPluginStreamWrappers(
   // Guard Google payloads against invalid negative thinking budgets emitted by
   // upstream model-ID heuristics for Gemini 3.1 variants.
   ctx.agent.streamFn = createGoogleThinkingPayloadWrapper(ctx.agent.streamFn, ctx.thinkingLevel);
+
+  if (
+    shouldApplyMinimaxM3ThinkingCompat({
+      provider: ctx.provider,
+      modelId: ctx.modelId,
+    })
+  ) {
+    ctx.agent.streamFn = createMinimaxM3ThinkingWrapper(ctx.agent.streamFn);
+  }
 
   const anthropicFastMode = resolveAnthropicFastMode(ctx.effectiveExtraParams);
   if (anthropicFastMode !== undefined) {

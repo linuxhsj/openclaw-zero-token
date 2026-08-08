@@ -17,7 +17,7 @@
       "choiceHint": "Global endpoint - api.minimax.io",
       "groupId": "minimax",
       "groupLabel": "MiniMax",
-      "groupHint": "M2.7 (recommended)"
+      "groupHint": "M3 (recommended)"
     },
     {
       "provider": "minimax",
@@ -28,7 +28,7 @@
       "choiceHint": "Global endpoint - api.minimax.io",
       "groupId": "minimax",
       "groupLabel": "MiniMax",
-      "groupHint": "M2.7 (recommended)",
+      "groupHint": "M3 (recommended)",
       "optionKey": "minimaxApiKey",
       "cliFlag": "--minimax-api-key",
       "cliOption": "--minimax-api-key <key>",
@@ -42,7 +42,7 @@
       "choiceHint": "CN endpoint - api.minimaxi.com",
       "groupId": "minimax",
       "groupLabel": "MiniMax",
-      "groupHint": "M2.7 (recommended)"
+      "groupHint": "M3 (recommended)"
     },
     {
       "provider": "minimax",
@@ -53,7 +53,7 @@
       "choiceHint": "CN endpoint - api.minimaxi.com",
       "groupId": "minimax",
       "groupLabel": "MiniMax",
-      "groupHint": "M2.7 (recommended)",
+      "groupHint": "M3 (recommended)",
       "optionKey": "minimaxApiKey",
       "cliFlag": "--minimax-api-key",
       "cliOption": "--minimax-api-key <key>",

@@ -1,9 +1,44 @@
 import type { StreamFn } from "@mariozechner/pi-agent-core";
 import { streamSimple } from "@mariozechner/pi-ai";
+import { streamWithPayloadPatch } from "./stream-payload-utils.js";
 
 const MINIMAX_FAST_MODEL_IDS = new Map<string, string>([
   ["MiniMax-M2.7", "MiniMax-M2.7-highspeed"],
 ]);
+
+export function shouldApplyMinimaxM3ThinkingCompat(params: {
+  provider: string;
+  modelId: string;
+}): boolean {
+  return (
+    (params.provider === "minimax" || params.provider === "minimax-portal") &&
+    params.modelId.trim().toLowerCase() === "minimax-m3"
+  );
+}
+
+export function createMinimaxM3ThinkingWrapper(baseStreamFn: StreamFn | undefined): StreamFn {
+  const underlying = baseStreamFn ?? streamSimple;
+  return (model, context, options) => {
+    if (
+      model.api !== "anthropic-messages" ||
+      !shouldApplyMinimaxM3ThinkingCompat({ provider: model.provider, modelId: model.id })
+    ) {
+      return underlying(model, context, options);
+    }
+
+    return streamWithPayloadPatch(underlying, model, context, options, (payloadObj) => {
+      const thinking = payloadObj.thinking;
+      if (
+        thinking &&
+        typeof thinking === "object" &&
+        !Array.isArray(thinking) &&
+        (thinking as Record<string, unknown>).type === "enabled"
+      ) {
+        payloadObj.thinking = { type: "adaptive" };
+      }
+    });
+  };
+}
 
 function resolveMinimaxFastModelId(modelId: unknown): string | undefined {
   if (typeof modelId !== "string") {

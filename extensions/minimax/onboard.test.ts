@@ -8,7 +8,11 @@ import {
   createLegacyProviderConfig,
   EXPECTED_FALLBACKS,
 } from "../../test/helpers/extensions/onboard-config.js";
-import { applyMinimaxApiConfig, applyMinimaxApiProviderConfig } from "./onboard.js";
+import {
+  applyMinimaxApiConfig,
+  applyMinimaxApiConfigCn,
+  applyMinimaxApiProviderConfig,
+} from "./onboard.js";
 
 describe("minimax onboard", () => {
   it("adds minimax provider with correct settings", () => {
@@ -20,9 +24,32 @@ describe("minimax onboard", () => {
     });
   });
 
-  it("keeps reasoning enabled for MiniMax-M2.7", () => {
+  it("uses the CN Anthropic endpoint for CN onboarding", () => {
+    const cfg = applyMinimaxApiConfigCn({});
+    expect(cfg.models?.providers?.minimax).toMatchObject({
+      baseUrl: "https://api.minimaxi.com/anthropic",
+      api: "anthropic-messages",
+    });
+  });
+
+  it("uses M3 model metadata by default", () => {
+    const cfg = applyMinimaxApiConfig({});
+    expect(cfg.models?.providers?.minimax?.models[0]).toMatchObject({
+      id: "MiniMax-M3",
+      reasoning: true,
+      input: ["text", "image"],
+      contextWindow: 1_000_000,
+    });
+  });
+
+  it("keeps M2.7 model-specific metadata when selected", () => {
     const cfg = applyMinimaxApiConfig({}, "MiniMax-M2.7");
-    expect(cfg.models?.providers?.minimax?.models[0]?.reasoning).toBe(true);
+    expect(cfg.models?.providers?.minimax?.models[0]).toMatchObject({
+      id: "MiniMax-M2.7",
+      reasoning: true,
+      input: ["text"],
+      contextWindow: 204_800,
+    });
   });
 
   it("preserves existing model params when adding alias", () => {
@@ -31,7 +58,7 @@ describe("minimax onboard", () => {
         agents: {
           defaults: {
             models: {
-              "minimax/MiniMax-M2.7": {
+              "minimax/MiniMax-M3": {
                 alias: "MiniMax",
                 params: { custom: "value" },
               },
@@ -39,9 +66,9 @@ describe("minimax onboard", () => {
           },
         },
       },
-      "MiniMax-M2.7",
+      "MiniMax-M3",
     );
-    expect(cfg.agents?.defaults?.models?.["minimax/MiniMax-M2.7"]).toMatchObject({
+    expect(cfg.agents?.defaults?.models?.["minimax/MiniMax-M3"]).toMatchObject({
       alias: "Minimax",
       params: { custom: "value" },
     });
@@ -60,7 +87,7 @@ describe("minimax onboard", () => {
     expect(cfg.models?.providers?.minimax?.apiKey).toBe("old-key");
     expect(cfg.models?.providers?.minimax?.models.map((m) => m.id)).toEqual([
       "old-model",
-      "MiniMax-M2.7",
+      "MiniMax-M3",
     ]);
   });
 
@@ -108,10 +135,8 @@ describe("minimax onboard", () => {
   });
 
   it("sets the chosen model as primary in config mode", () => {
-    const cfg = applyMinimaxApiConfig({}, "MiniMax-M2.7-highspeed");
-    expect(resolveAgentModelPrimaryValue(cfg.agents?.defaults?.model)).toBe(
-      "minimax/MiniMax-M2.7-highspeed",
-    );
+    const cfg = applyMinimaxApiConfig({}, "MiniMax-M2.7");
+    expect(resolveAgentModelPrimaryValue(cfg.agents?.defaults?.model)).toBe("minimax/MiniMax-M2.7");
   });
 
   it("preserves existing model fallbacks", () => {
