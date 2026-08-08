@@ -61,6 +61,16 @@ describe("minimax model definitions", () => {
     expect(model).toMatchObject({ name: "MiniMax M3", input: ["text", "image"] });
   });
 
+  it("uses catalog input when explicit input is omitted", () => {
+    const model = buildMinimaxModelDefinition({
+      id: "MiniMax-M3",
+      cost: MINIMAX_API_COST,
+      contextWindow: DEFAULT_MINIMAX_CONTEXT_WINDOW,
+      maxTokens: DEFAULT_MINIMAX_MAX_TOKENS,
+    });
+    expect(model.input).toEqual(["text", "image"]);
+  });
+
   it("falls back to generated name for unknown model id", () => {
     const model = buildMinimaxApiModelDefinition("MiniMax-Future");
     expect(model.name).toBe("MiniMax MiniMax-Future");
