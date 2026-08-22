@@ -23,7 +23,11 @@ import {
 } from "./media-understanding-provider.js";
 import type { MiniMaxRegion } from "./oauth.js";
 import { applyMinimaxApiConfig, applyMinimaxApiConfigCn } from "./onboard.js";
-import { buildMinimaxPortalProvider, buildMinimaxProvider } from "./provider-catalog.js";
+import {
+  buildMinimaxPortalProvider,
+  buildMinimaxProvider,
+} from "./provider-catalog.js";
+import { buildMinimaxSpeechProvider } from "./speech-provider.js";
 
 const API_PROVIDER_ID = "minimax";
 const PORTAL_PROVIDER_ID = "minimax-portal";
@@ -44,7 +48,10 @@ function portalModelRef(modelId: string): string {
   return `${PORTAL_PROVIDER_ID}/${modelId}`;
 }
 
-function buildPortalProviderCatalog(params: { baseUrl: string; apiKey: string }) {
+function buildPortalProviderCatalog(params: {
+  baseUrl: string;
+  apiKey: string;
+}) {
   return {
     ...buildMinimaxPortalProvider(),
     baseUrl: params.baseUrl,
@@ -71,16 +78,24 @@ function resolvePortalCatalog(ctx: ProviderCatalogContext) {
   const authStore = ensureAuthProfileStore(ctx.agentDir, {
     allowKeychainPrompt: false,
   });
-  const hasProfiles = listProfilesForProvider(authStore, PORTAL_PROVIDER_ID).length > 0;
+  const hasProfiles =
+    listProfilesForProvider(authStore, PORTAL_PROVIDER_ID).length > 0;
   const explicitApiKey =
-    typeof explicitProvider?.apiKey === "string" ? explicitProvider.apiKey.trim() : undefined;
-  const apiKey = envApiKey ?? explicitApiKey ?? (hasProfiles ? MINIMAX_OAUTH_MARKER : undefined);
+    typeof explicitProvider?.apiKey === "string"
+      ? explicitProvider.apiKey.trim()
+      : undefined;
+  const apiKey =
+    envApiKey ??
+    explicitApiKey ??
+    (hasProfiles ? MINIMAX_OAUTH_MARKER : undefined);
   if (!apiKey) {
     return null;
   }
 
   const explicitBaseUrl =
-    typeof explicitProvider?.baseUrl === "string" ? explicitProvider.baseUrl.trim() : undefined;
+    typeof explicitProvider?.baseUrl === "string"
+      ? explicitProvider.baseUrl.trim()
+      : undefined;
 
   return {
     provider: buildPortalProviderCatalog({
@@ -95,7 +110,9 @@ function createOAuthHandler(region: MiniMaxRegion) {
   const regionLabel = region === "cn" ? "CN" : "Global";
 
   return async (ctx: ProviderAuthContext): Promise<ProviderAuthResult> => {
-    const progress = ctx.prompter.progress(`Starting MiniMax OAuth (${regionLabel})…`);
+    const progress = ctx.prompter.progress(
+      `Starting MiniMax OAuth (${regionLabel})…`,
+    );
     try {
       const { loginMiniMaxPortalOAuth } = await import("./oauth.runtime.js");
       const result = await loginMiniMaxPortalOAuth({
@@ -233,7 +250,9 @@ export default definePluginEntry({
     });
 
     api.registerMediaUnderstandingProvider(minimaxMediaUnderstandingProvider);
-    api.registerMediaUnderstandingProvider(minimaxPortalMediaUnderstandingProvider);
+    api.registerMediaUnderstandingProvider(
+      minimaxPortalMediaUnderstandingProvider,
+    );
 
     api.registerProvider({
       id: PORTAL_PROVIDER_ID,
@@ -278,6 +297,9 @@ export default definePluginEntry({
       isModernModelRef: ({ modelId }) => isMiniMaxModernModelId(modelId),
     });
     api.registerImageGenerationProvider(buildMinimaxImageGenerationProvider());
-    api.registerImageGenerationProvider(buildMinimaxPortalImageGenerationProvider());
+    api.registerImageGenerationProvider(
+      buildMinimaxPortalImageGenerationProvider(),
+    );
+    api.registerSpeechProvider(buildMinimaxSpeechProvider());
   },
 });
