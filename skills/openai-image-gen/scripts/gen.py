@@ -7,6 +7,7 @@ import os
 import random
 import re
 import sys
+import time
 import urllib.error
 import urllib.request
 from collections.abc import Callable
@@ -206,6 +207,83 @@ def request_images(
         raise RuntimeError(f"OpenAI Images API failed ({e.code}): {payload}") from e
 
 
+ATLAS_BASE_URL = "https://api.atlascloud.ai/api/v1/model"
+ATLAS_DEFAULT_MODEL = "alibaba/wan-2.7/text-to-image"
+ATLAS_POLL_TIMEOUT_S = 300
+ATLAS_POLL_INTERVAL_S = 3
+# Atlas sits behind an edge that rejects the stock urllib User-Agent with a
+# 403 (error code 1010), so send an explicit one on every request.
+ATLAS_USER_AGENT = "openclaw-openai-image-gen/1.0"
+
+
+def atlas_size(size: str) -> str:
+    """Atlas expects width*height, not the OpenAI width x height form."""
+    return size.replace("x", "*")
+
+
+def request_images_atlas(api_key: str, prompt: str, model: str, size: str) -> dict:
+    """Generate one image through Atlas Cloud's async API.
+
+    Atlas is not OpenAI Images API compatible: a POST queues a prediction and
+    the result is fetched by polling. The return value is shaped like an
+    OpenAI Images response so the caller stays provider-agnostic.
+    """
+    body = json.dumps(
+        {"model": model, "prompt": prompt, "size": atlas_size(size)}
+    ).encode("utf-8")
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json",
+        "User-Agent": ATLAS_USER_AGENT,
+    }
+    req = urllib.request.Request(
+        f"{ATLAS_BASE_URL}/generateImage", method="POST", headers=headers, data=body
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=60) as resp:
+            submitted = json.loads(resp.read().decode("utf-8"))
+    except urllib.error.HTTPError as e:
+        payload = e.read().decode("utf-8", errors="replace")
+        raise RuntimeError(f"Atlas Cloud submit failed ({e.code}): {payload}") from e
+
+    prediction_id = (submitted.get("data") or {}).get("id")
+    if not prediction_id:
+        raise RuntimeError(f"Unexpected Atlas submit response: {json.dumps(submitted)[:400]}")
+
+    deadline = time.monotonic() + ATLAS_POLL_TIMEOUT_S
+    while True:
+        time.sleep(ATLAS_POLL_INTERVAL_S)
+        poll = urllib.request.Request(
+            f"{ATLAS_BASE_URL}/prediction/{prediction_id}",
+            method="GET",
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "User-Agent": ATLAS_USER_AGENT,
+            },
+        )
+        try:
+            with urllib.request.urlopen(poll, timeout=60) as resp:
+                result = json.loads(resp.read().decode("utf-8"))
+        except urllib.error.HTTPError as e:
+            payload = e.read().decode("utf-8", errors="replace")
+            raise RuntimeError(f"Atlas Cloud poll failed ({e.code}): {payload}") from e
+
+        data = result.get("data") or {}
+        status = data.get("status")
+        if status == "completed":
+            outputs = data.get("outputs") or []
+            if not outputs:
+                raise RuntimeError(f"Atlas Cloud returned no output: {json.dumps(result)[:400]}")
+            return {"data": [{"url": outputs[0]}]}
+        if status == "failed":
+            raise RuntimeError(f"Atlas Cloud generation failed: {data.get('error') or result}")
+        if time.monotonic() > deadline:
+            raise RuntimeError(
+                f"Atlas Cloud prediction {prediction_id} still {status} after "
+                f"{ATLAS_POLL_TIMEOUT_S}s"
+            )
+
+
 def write_gallery(out_dir: Path, items: list[dict]) -> None:
     thumbs = "\n".join(
         [
@@ -241,10 +319,18 @@ def write_gallery(out_dir: Path, items: list[dict]) -> None:
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(description="Generate images via OpenAI Images API.")
+    ap = argparse.ArgumentParser(
+        description="Generate images via the OpenAI Images API (or Atlas Cloud with --provider atlas)."
+    )
+    ap.add_argument(
+        "--provider",
+        default="openai",
+        choices=["openai", "atlas"],
+        help="Image backend. 'atlas' uses Atlas Cloud's async API and ATLASCLOUD_API_KEY.",
+    )
     ap.add_argument("--prompt", help="Single prompt. If omitted, random prompts are generated.")
     ap.add_argument("--count", type=int, default=8, help="How many images to generate.")
-    ap.add_argument("--model", default="gpt-image-1", help="Image model id.")
+    ap.add_argument("--model", default="", help="Image model id. Defaults per provider.")
     ap.add_argument("--size", default="", help="Image size (e.g. 1024x1024, 1536x1024). Defaults based on model if not specified.")
     ap.add_argument("--quality", default="", help="Image quality (e.g. high, standard). Defaults based on model if not specified.")
     ap.add_argument("--background", default="", help="Background transparency (GPT models only): transparent, opaque, or auto.")
@@ -253,10 +339,14 @@ def main() -> int:
     ap.add_argument("--out-dir", default="", help="Output directory (default: ./tmp/openai-image-gen-<ts>).")
     args = ap.parse_args()
 
-    api_key = (os.environ.get("OPENAI_API_KEY") or "").strip()
+    key_env = "ATLASCLOUD_API_KEY" if args.provider == "atlas" else "OPENAI_API_KEY"
+    api_key = (os.environ.get(key_env) or "").strip()
     if not api_key:
-        print("Missing OPENAI_API_KEY", file=sys.stderr)
+        print(f"Missing {key_env}", file=sys.stderr)
         return 2
+
+    if not args.model:
+        args.model = ATLAS_DEFAULT_MODEL if args.provider == "atlas" else "gpt-image-1"
 
     # Apply model-specific defaults if not specified
     default_size, default_quality = get_model_defaults(args.model)
@@ -273,13 +363,27 @@ def main() -> int:
 
     prompts = [args.prompt] * count if args.prompt else pick_prompts(count)
 
-    try:
-        normalized_background = normalize_background(args.model, args.background)
-        normalized_style = normalize_style(args.model, args.style)
-        normalized_output_format = normalize_output_format(args.model, args.output_format)
-    except ValueError as e:
-        print(str(e), file=sys.stderr)
-        return 2
+    if args.provider == "atlas":
+        for flag, value in (
+            ("--quality", args.quality),
+            ("--background", args.background),
+            ("--output-format", args.output_format),
+            ("--style", args.style),
+        ):
+            if value:
+                print(
+                    f"Warning: {flag} is an OpenAI-only option; ignoring for --provider atlas.",
+                    file=sys.stderr,
+                )
+        normalized_background = normalized_style = normalized_output_format = ""
+    else:
+        try:
+            normalized_background = normalize_background(args.model, args.background)
+            normalized_style = normalize_style(args.model, args.style)
+            normalized_output_format = normalize_output_format(args.model, args.output_format)
+        except ValueError as e:
+            print(str(e), file=sys.stderr)
+            return 2
 
     # Determine file extension based on output format
     if args.model.startswith("gpt-image") and normalized_output_format:
@@ -290,16 +394,19 @@ def main() -> int:
     items: list[dict] = []
     for idx, prompt in enumerate(prompts, start=1):
         print(f"[{idx}/{len(prompts)}] {prompt}")
-        res = request_images(
-            api_key,
-            prompt,
-            args.model,
-            size,
-            quality,
-            normalized_background,
-            normalized_output_format,
-            normalized_style,
-        )
+        if args.provider == "atlas":
+            res = request_images_atlas(api_key, prompt, args.model, size)
+        else:
+            res = request_images(
+                api_key,
+                prompt,
+                args.model,
+                size,
+                quality,
+                normalized_background,
+                normalized_output_format,
+                normalized_style,
+            )
         data = res.get("data", [{}])[0]
         image_b64 = data.get("b64_json")
         image_url = data.get("url")

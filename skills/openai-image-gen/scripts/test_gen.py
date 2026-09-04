@@ -1,13 +1,17 @@
 """Tests for openai-image-gen helpers."""
 
+import json
 import tempfile
 from pathlib import Path
 
+import gen
 import pytest
 from gen import (
+    atlas_size,
     normalize_background,
     normalize_output_format,
     normalize_style,
+    request_images_atlas,
     write_gallery,
 )
 
@@ -138,3 +142,76 @@ def test_write_gallery_normal_output():
         assert "a lobster astronaut, golden hour" in html
         assert 'src="001-lobster.png"' in html
         assert "002-nook.png" in html
+
+
+def test_atlas_size_converts_openai_form():
+    assert atlas_size("1024x1024") == "1024*1024"
+    assert atlas_size("1536x1024") == "1536*1024"
+
+
+def test_atlas_size_leaves_native_form_untouched():
+    assert atlas_size("1024*1024") == "1024*1024"
+
+
+def _fake_urlopen(responses):
+    """Return a urlopen stub that yields the given payloads in order."""
+    calls = iter(responses)
+
+    class _Resp:
+        def __init__(self, payload):
+            self._payload = json.dumps(payload).encode("utf-8")
+
+        def read(self):
+            return self._payload
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exc):
+            return False
+
+    def _urlopen(req, timeout=None):
+        return _Resp(next(calls))
+
+    return _urlopen
+
+
+def test_request_images_atlas_polls_until_completed(monkeypatch):
+    monkeypatch.setattr(gen.time, "sleep", lambda _s: None)
+    monkeypatch.setattr(
+        gen.urllib.request,
+        "urlopen",
+        _fake_urlopen(
+            [
+                {"data": {"id": "pred-1", "status": "processing"}},
+                {"data": {"id": "pred-1", "status": "processing"}},
+                {"data": {"id": "pred-1", "status": "completed", "outputs": ["https://example/img.png"]}},
+            ]
+        ),
+    )
+    res = request_images_atlas("key", "a prompt", "alibaba/wan-2.7/text-to-image", "1024x1024")
+    assert res == {"data": [{"url": "https://example/img.png"}]}
+
+
+def test_request_images_atlas_raises_on_failed_prediction(monkeypatch):
+    monkeypatch.setattr(gen.time, "sleep", lambda _s: None)
+    monkeypatch.setattr(
+        gen.urllib.request,
+        "urlopen",
+        _fake_urlopen(
+            [
+                {"data": {"id": "pred-1", "status": "processing"}},
+                {"data": {"id": "pred-1", "status": "failed", "error": "content policy"}},
+            ]
+        ),
+    )
+    with pytest.raises(RuntimeError, match="content policy"):
+        request_images_atlas("key", "a prompt", "alibaba/wan-2.7/text-to-image", "1024x1024")
+
+
+def test_request_images_atlas_raises_without_prediction_id(monkeypatch):
+    monkeypatch.setattr(
+        gen.urllib.request, "urlopen", _fake_urlopen([{"code": 200, "data": {}}])
+    )
+    with pytest.raises(RuntimeError, match="Unexpected Atlas submit response"):
+        request_images_atlas("key", "a prompt", "alibaba/wan-2.7/text-to-image", "1024x1024")
